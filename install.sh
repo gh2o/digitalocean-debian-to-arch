@@ -138,6 +138,12 @@ download_packages() {
 
 extract_packages() {
 	log "Extracting packages ..."
+	local dir filename
+	for pkg in "${!dependencies[@]}"; do
+		dir=$(get_package_directory ${pkg})
+		filename=$(get_package_value ${dir}/desc FILENAME)
+		xz -dc /archroot/packages/${filename} | tar -C /archroot -xf -
+	done
 }
 
 error_occurred() {

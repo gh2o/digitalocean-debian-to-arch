@@ -7,6 +7,10 @@ set -eu
 set -o pipefail
 shopt -s nullglob
 
+export LC_ALL=C
+export LANG=C
+unset LANGUAGE
+
 ### VARIABLES
 declare -A dependencies
 dependencies[pacman]=x
@@ -146,8 +150,39 @@ extract_packages() {
 	done
 }
 
+configure_and_bootstrap() {
+
+	log "Mounting virtual filesystems ..."
+	mount -t proc proc /archroot/proc
+	mount -t sysfs sys /archroot/sys
+	mount --bind /dev /archroot/dev
+	mount -t devpts pts /archroot/dev/pts
+
+	log "Doing initial configuration ..."
+	cp /etc/resolv.conf /archroot/etc/resolv.conf
+	rmdir /archroot/var/cache/pacman/pkg
+	ln -s ../../../packages /archroot/var/cache/pacman/pkg
+	echo "Server = ${archlinux_mirror}"'/$repo/os/$arch' \
+		>> /archroot/etc/pacman.d/mirrorlist
+	chroot /archroot /usr/bin/update-ca-certificates --fresh
+
+	log "Initial bootstrap ..."
+	chroot /archroot pacman-key --init
+	chroot /archroot pacman -Sy --noconfirm base
+
+}
+
 error_occurred() {
 	log "Error occurred. Exiting."
+}
+
+exit_cleanup() {
+	log "Cleaning up ..."
+	set +e
+	umount /archroot/dev/pts
+	umount /archroot/dev
+	umount /archroot/sys
+	umount /archroot/proc
 }
 
 main() {
@@ -168,6 +203,7 @@ main() {
 	fi
 
 	trap error_occurred ERR
+	trap exit_cleanup EXIT
 
 	rm -rf /archroot/installer
 	mkdir -p /archroot/installer
@@ -178,6 +214,8 @@ main() {
 	calculate_dependencies
 	download_packages
 	extract_packages
+
+	configure_and_bootstrap
 
 }
 

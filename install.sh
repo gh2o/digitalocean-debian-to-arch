@@ -159,16 +159,28 @@ configure_and_bootstrap() {
 	mount -t devpts pts /archroot/dev/pts
 
 	log "Doing initial configuration ..."
-	cp /etc/resolv.conf /archroot/etc/resolv.conf
 	rmdir /archroot/var/cache/pacman/pkg
 	ln -s ../../../packages /archroot/var/cache/pacman/pkg
-	echo "Server = ${archlinux_mirror}"'/$repo/os/$arch' \
-		>> /archroot/etc/pacman.d/mirrorlist
 	chroot /archroot /usr/bin/update-ca-certificates --fresh
 
-	log "Initial bootstrap ..."
-	chroot /archroot pacman-key --init
-	chroot /archroot pacman -Sy --noconfirm base
+	local shouldbootstrap=false isbootstrapped=false
+	while ! $isbootstrapped; do
+		if $shouldbootstrap; then
+			log "Initial bootstrap ..."
+			chroot /archroot pacman-key --init
+			chroot /archroot pacman-key --populate archlinux
+			chroot /archroot pacman -Sy --force --noconfirm base
+			isbootstrapped=true
+		else
+			shouldbootstrap=true
+		fi
+		# config overwritten by pacman
+		rm -f /archroot/etc/resolv.conf.pacorig
+		cp /etc/resolv.conf /archroot/etc/resolv.conf
+		rm -f /archroot/etc/pacman.d/mirrorlist.pacorig
+		echo "Server = ${archlinux_mirror}"'/$repo/os/$arch' \
+			>> /archroot/etc/pacman.d/mirrorlist
+	done
 
 }
 

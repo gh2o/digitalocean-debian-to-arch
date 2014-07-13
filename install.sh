@@ -6,6 +6,7 @@ archlinux_mirror="https://mirrors.kernel.org/archlinux/"
 set -eu
 set -o pipefail
 shopt -s nullglob
+shopt -s dotglob
 
 export LC_ALL=C
 export LANG=C
@@ -169,7 +170,7 @@ configure_and_bootstrap() {
 			log "Initial bootstrap ..."
 			chroot /archroot pacman-key --init
 			chroot /archroot pacman-key --populate archlinux
-			chroot /archroot pacman -Sy --force --noconfirm base
+			chroot /archroot pacman -Sy --force --noconfirm base kexec-tools
 			isbootstrapped=true
 		else
 			shouldbootstrap=true
@@ -197,7 +198,7 @@ exit_cleanup() {
 	umount /archroot/proc
 }
 
-main() {
+installer_main() {
 
 	if [ "${EUID}" -ne 0 ] || [ "${UID}" -ne 0 ]; then
 		log "Script must be run as root. Exiting."
@@ -229,6 +230,73 @@ main() {
 
 	configure_and_bootstrap
 
+	# prepare for transtiory_main
+	mv /sbin/init /sbin/init.original
+	cp "${script_path}" /sbin/init
+	reboot
+
 }
 
-main "$@"
+transitory_main() {
+
+	if [ "${script_path}" = "/sbin/init" ]; then
+		# save script
+		mount -o remount,rw /
+		cp "${script_path}" /archroot/installer/script.sh
+		# restore init in case anything goes wrong
+		rm /sbin/init
+		mv /sbin/init.original /sbin/init
+		# chroot into archroot
+		mkdir /archroot/realroot
+		mount --bind / /archroot/realroot
+		umount /run || true
+		umount -l /dev/pts
+		umount -l /dev
+		umount /sys
+		umount /proc
+		exec chroot /archroot /installer/script.sh
+	elif [ "${script_path}" = "/installer/script.sh" ]; then
+		# now in archroot
+		local oldroot=/realroot/archroot/oldroot
+		mkdir ${oldroot}
+		# move old files into oldroot
+		local entry
+		for entry in /realroot/*; do
+			if [ "${entry}" != "/realroot/archroot" ]; then
+				mv "${entry}" ${oldroot}
+			fi
+		done
+		# hardlink files into realroot
+		cd /
+		mv ${oldroot} /realroot
+		for entry in /realroot/archroot/*; do
+			if [ "${entry}" != "/realroot/archroot/realroot" ]; then
+				cp -al "${entry}" /realroot
+			fi
+		done
+		# done?
+		exec /bin/bash
+	else
+		log "Unknown state! You're own your own."
+		exec /bin/bash
+	fi
+
+}
+
+canonicalize_path() {
+	local basename="$(basename "${1}")"
+	local dirname="$(dirname "${1}")"
+	(
+		cd "${dirname}"
+		echo "$(pwd -P)/${basename}"
+	)
+}
+
+script_path="$(canonicalize_path "${0}")"
+if [ $$ -eq 1 ]; then
+	transitory_main "$@"
+elif [ "${script_path}" = "/sbin/init" ]; then
+	exec /sbin/init.original "$@"
+else
+	installer_main "$@"
+fi

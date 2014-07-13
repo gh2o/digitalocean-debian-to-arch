@@ -246,20 +246,27 @@ transitory_main() {
 		# restore init in case anything goes wrong
 		rm /sbin/init
 		mv /sbin/init.original /sbin/init
-		# chroot into archroot
+		# unmount other filesystems
+		if ! [ -e /proc/mounts ]; then
+			mount -t proc proc /proc
+		fi
+		local device mountpoint fstype ignored
+		while IFS=" " read device mountpoint fstype ignored; do
+			if [ "${device}" == "${device/\//}" ] && [ "${fstype}" != "rootfs" ]; then
+				umount -l "${mountpoint}"
+			fi
+		done < <(tac /proc/mounts)
+		# mount real root
 		mkdir /archroot/realroot
 		mount --bind / /archroot/realroot
-		umount /run || true
-		umount -l /dev/pts
-		umount -l /dev
-		umount /sys
-		umount /proc
+		# chroot into archroot
 		exec chroot /archroot /installer/script.sh
 	elif [ "${script_path}" = "/installer/script.sh" ]; then
 		# now in archroot
 		local oldroot=/realroot/archroot/oldroot
 		mkdir ${oldroot}
 		# move old files into oldroot
+		log "Backing up old root ..."
 		local entry
 		for entry in /realroot/*; do
 			if [ "${entry}" != "/realroot/archroot" ]; then
@@ -267,6 +274,7 @@ transitory_main() {
 			fi
 		done
 		# hardlink files into realroot
+		log "Populating new root ..."
 		cd /
 		mv ${oldroot} /realroot
 		for entry in /realroot/archroot/*; do
@@ -274,8 +282,13 @@ transitory_main() {
 				cp -al "${entry}" /realroot
 			fi
 		done
-		# done?
-		exec /bin/bash
+		# done!
+		log "Rebooting ..."
+		mount -t proc proc /proc
+		mount -o remount,ro /realroot
+		sync
+		umount /proc
+		reboot -f
 	else
 		log "Unknown state! You're own your own."
 		exec /bin/bash

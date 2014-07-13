@@ -170,7 +170,7 @@ configure_and_bootstrap() {
 			log "Initial bootstrap ..."
 			chroot /archroot pacman-key --init
 			chroot /archroot pacman-key --populate archlinux
-			chroot /archroot pacman -Sy --force --noconfirm base kexec-tools
+			chroot /archroot pacman -Sy --force --noconfirm base openssh kexec-tools
 			isbootstrapped=true
 		else
 			shouldbootstrap=true
@@ -293,6 +293,53 @@ transitory_main() {
 		log "Unknown state! You're own your own."
 		exec /bin/bash
 	fi
+
+}
+
+postinstall_main() {
+
+	# set up fstab
+	echo "LABEL=DOROOT / ext4 defaults 0 1" >> /etc/fstab
+
+	# set up shadow
+	(
+		grep    '^root:' /oldroot/etc/shadow
+		grep -v '^root:' /etc/shadow
+	) > /etc/shadow.new
+	cat /etc/shadow.new > /etc/shadow
+	rm /etc/shadow.new
+
+	# set up network
+	local ipaddr netmask gateway prefixlen=24
+	local oldeni=/oldroot/etc/network/interfaces
+	grep -o 'address [0-9.]\+' ${oldeni} | read ignored ipaddr
+	grep -o 'netmask [0-9.]\+' ${oldeni} | read ignored netmask
+	grep -o 'gateway [0-9.]\+' ${oldeni} | read ignored gateway
+	case ${netmask} in
+		255.255.255.0)
+			prefixlen=24
+			;;
+		255.255.240.0)
+			prefixlen=20
+			;;
+		255.255.0.0)
+			prefixlen=16
+			;;
+	esac
+	cat > /etc/systemd/network/internet.network <<EOF
+[Match]
+Name=eth0
+
+[Network]
+Address=${ipaddr}/${prefixlen}
+Gateway=${gateway}
+DNS=8.8.8.8
+DNS=8.8.4.4
+EOF
+
+	# enable ssh
+	systemctl enable sshd
+	systemctl start sshd
 
 }
 

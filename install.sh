@@ -256,6 +256,20 @@ EOF
 	chroot /archroot systemctl enable systemd-networkd
 	chroot /archroot systemctl enable sshd
 
+	# install services
+	local unitdir=/archroot/etc/systemd/system
+	mkdir -p ${unitdir}/sysinit.target.wants
+
+	ln -s ../installer-cleanup.service ${unitdir}/sysinit.target.wants/
+	cat > ${unitdir}/installer-cleanup.service <<EOF
+[Unit]
+Description=Post-install cleanup
+ConditionPathExists=/installer/script.sh
+[Service]
+Type=oneshot
+ExecStart=/installer/script.sh
+EOF
+
 }
 
 error_occurred() {
@@ -373,6 +387,11 @@ transitory_main() {
 }
 
 postinstall_main() {
+
+	# remove cleanup service
+	local unitdir=/etc/systemd/system
+	rm -f ${unitdir}/installer-cleanup.service
+	rm -f ${unitdir}/sysinit.target.wants/installer-cleanup.service
 
 	# cleanup filesystem
 	rm -f /var/cache/pacman/pkg

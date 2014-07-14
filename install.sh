@@ -242,6 +242,9 @@ DNS=8.8.8.8
 DNS=8.8.4.4
 EOF
 
+	# copy over ssh keys
+	cp -p /etc/ssh/ssh_*_key{,.pub} /archroot/etc/ssh/
+
 	# enable services
 	chroot /archroot systemctl enable systemd-networkd
 	chroot /archroot systemctl enable sshd

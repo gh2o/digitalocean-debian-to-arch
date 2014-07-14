@@ -190,7 +190,58 @@ bootstrap_system() {
 }
 
 postbootstrap_configuration() {
+
 	log "Doing post-bootstrap configuration ..."
+
+	# set up fstab
+	echo "LABEL=DOROOT / ext4 defaults 0 1" >> /archroot/etc/fstab
+
+	# set up shadow
+	(
+		umask 077
+		(
+			grep    '^root:' /etc/shadow
+			grep -v '^root:' /archroot/etc/shadow
+		) > /archroot/etc/shadow.new
+		cat /archroot/etc/shadow.new > /archroot/etc/shadow
+		rm /archroot/etc/shadow.new
+	)
+
+	# set up network
+	local grepfd
+	local ipaddr netmask gateway prefixlen=24
+	local eni=/etc/network/interfaces
+	exec {grepfd}< <(
+		grep -o 'address [0-9.]\+' ${eni}
+		grep -o 'netmask [0-9.]\+' ${eni}
+		grep -o 'gateway [0-9.]\+' ${eni}
+	)
+	read ignored ipaddr <&${grepfd}
+	read ignored netmask <&${grepfd}
+	read ignored gateway <&${grepfd}
+	exec {grepfd}<&-
+	case ${netmask} in
+		255.255.255.0)
+			prefixlen=24
+			;;
+		255.255.240.0)
+			prefixlen=20
+			;;
+		255.255.0.0)
+			prefixlen=16
+			;;
+	esac
+	cat > /archroot/etc/systemd/network/internet.network <<EOF
+[Match]
+Name=eth0
+
+[Network]
+Address=${ipaddr}/${prefixlen}
+Gateway=${gateway}
+DNS=8.8.8.8
+DNS=8.8.4.4
+EOF
+
 }
 
 error_occurred() {
@@ -308,52 +359,6 @@ transitory_main() {
 }
 
 postinstall_main() {
-
-	# set up fstab
-	echo "LABEL=DOROOT / ext4 defaults 0 1" >> /etc/fstab
-
-	# set up shadow
-	(
-		grep    '^root:' /oldroot/etc/shadow
-		grep -v '^root:' /etc/shadow
-	) > /etc/shadow.new
-	cat /etc/shadow.new > /etc/shadow
-	rm /etc/shadow.new
-
-	# set up network
-	local grepfd
-	local ipaddr netmask gateway prefixlen=24
-	local oldeni=/oldroot/etc/network/interfaces
-	exec {grepfd}< <(
-		grep -o 'address [0-9.]\+' ${oldeni}
-		grep -o 'netmask [0-9.]\+' ${oldeni}
-		grep -o 'gateway [0-9.]\+' ${oldeni}
-	)
-	read ignored ipaddr <&${grepfd}
-	read ignored netmask <&${grepfd}
-	read ignored gateway <&${grepfd}
-	exec {grepfd}<&-
-	case ${netmask} in
-		255.255.255.0)
-			prefixlen=24
-			;;
-		255.255.240.0)
-			prefixlen=20
-			;;
-		255.255.0.0)
-			prefixlen=16
-			;;
-	esac
-	cat > /etc/systemd/network/internet.network <<EOF
-[Match]
-Name=eth0
-
-[Network]
-Address=${ipaddr}/${prefixlen}
-Gateway=${gateway}
-DNS=8.8.8.8
-DNS=8.8.4.4
-EOF
 
 	# enable networkd
 	systemctl enable systemd-networkd

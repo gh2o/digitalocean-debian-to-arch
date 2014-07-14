@@ -4,15 +4,6 @@
 archlinux_mirror="https://mirrors.kernel.org/archlinux/"
 preserve_home_directories=true
 
-set -eu
-set -o pipefail
-shopt -s nullglob
-shopt -s dotglob
-
-export LC_ALL=C
-export LANG=C
-unset LANGUAGE
-
 stdin_symlink="$(readlink /dev/fd/0)"
 if [ "${stdin_symlink#pipe:}" != "${stdin_symlink}" ]; then
 	echo "This script must be run from a file. Exiting." >&2
@@ -22,7 +13,17 @@ fi
 if [ -n "${POSIXLY_CORRECT}" ] || [ -z "${BASH_VERSION}" ]; then
 	unset POSIXLY_CORRECT
 	exec bash "$0" "$@"
+	exit 1
 fi
+
+set -eu
+set -o pipefail
+shopt -s nullglob
+shopt -s dotglob
+
+export LC_ALL=C
+export LANG=C
+unset LANGUAGE
 
 declare -A dependencies
 dependencies[pacman]=x

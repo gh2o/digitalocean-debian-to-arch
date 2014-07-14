@@ -242,6 +242,10 @@ DNS=8.8.8.8
 DNS=8.8.4.4
 EOF
 
+	# enable services
+	chroot /archroot systemctl enable systemd-networkd
+	chroot /archroot systemctl enable sshd
+
 }
 
 error_occurred() {
@@ -359,14 +363,6 @@ transitory_main() {
 }
 
 postinstall_main() {
-
-	# enable networkd
-	systemctl enable systemd-networkd
-	systemctl start systemd-networkd
-
-	# enable ssh
-	systemctl enable sshd
-	systemctl start sshd
 
 	# cleanup filesystem
 	rm -f /var/cache/pacman/pkg

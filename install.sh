@@ -2,6 +2,7 @@
 
 ### CONFIGURATION
 archlinux_mirror="https://mirrors.kernel.org/archlinux/"
+preserve_home_directories=true
 
 set -eu
 set -o pipefail
@@ -245,6 +246,12 @@ EOF
 	# copy over ssh keys
 	cp -p /etc/ssh/ssh_*_key{,.pub} /archroot/etc/ssh/
 
+	# optionally preserve home directories
+	if ${preserve_home_directories}; then
+		rm -rf /archroot/{home,root}
+		cp -al /{home,root} /archroot/
+	fi
+
 	# enable services
 	chroot /archroot systemctl enable systemd-networkd
 	chroot /archroot systemctl enable sshd
@@ -371,6 +378,7 @@ postinstall_main() {
 	rm -f /var/cache/pacman/pkg
 	mv /packages /var/cache/pacman/pkg
 	rm -f /.INSTALL /.MTREE /.PKGINFO
+	rm -rf /archroot
 	rm -rf /installer
 
 }

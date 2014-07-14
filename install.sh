@@ -373,6 +373,8 @@ if [ $$ -eq 1 ]; then
 	transitory_main "$@"
 elif [ "${script_path}" = "/sbin/init" ]; then
 	exec /sbin/init.original "$@"
+elif [ "${script_path}" = "/installer/script.sh" ]; then
+	postinstall_main "$@"
 else
 	installer_main "$@"
 fi

@@ -310,11 +310,18 @@ postinstall_main() {
 	rm /etc/shadow.new
 
 	# set up network
+	local grepfd
 	local ipaddr netmask gateway prefixlen=24
 	local oldeni=/oldroot/etc/network/interfaces
-	grep -o 'address [0-9.]\+' ${oldeni} | read ignored ipaddr
-	grep -o 'netmask [0-9.]\+' ${oldeni} | read ignored netmask
-	grep -o 'gateway [0-9.]\+' ${oldeni} | read ignored gateway
+	exec {grepfd}< <(
+		grep -o 'address [0-9.]\+' ${oldeni}
+		grep -o 'netmask [0-9.]\+' ${oldeni}
+		grep -o 'gateway [0-9.]\+' ${oldeni}
+	)
+	read ignored ipaddr <&${grepfd}
+	read ignored netmask <&${grepfd}
+	read ignored gateway <&${grepfd}
+	exec {grepfd}<&-
 	case ${netmask} in
 		255.255.255.0)
 			prefixlen=24
@@ -336,6 +343,8 @@ Gateway=${gateway}
 DNS=8.8.8.8
 DNS=8.8.4.4
 EOF
+	systemctl enable systemd-networkd
+	systemctl start systemd-networkd
 
 	# enable ssh
 	systemctl enable sshd

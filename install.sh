@@ -55,6 +55,20 @@ clean_archroot() {
 	done {lsfd}< <(ls /archroot)
 }
 
+install_haveged() {
+	if which haveged >/dev/null 2>&1; then
+		return
+	fi
+	log "Creating keys for pacman will be very slow because"
+	log "KVM lacks true sources of ramdomness. Install haveged"
+	log "to speed it up?"
+	local response
+	read -p '([yes] or no) ' response
+	if [ "${response}" = "yes" ] || [ -z "${response}" ]; then
+		apt-get -y install haveged
+	fi
+}
+
 initialize_coredb() {
 	log "Downloading package database ..."
 	wget "${archlinux_mirror}/core/os/x86_64/core.db"
@@ -339,6 +353,8 @@ installer_main() {
 	cd /archroot/installer
 
 	clean_archroot
+	install_haveged
+
 	initialize_coredb
 	calculate_dependencies
 	download_packages

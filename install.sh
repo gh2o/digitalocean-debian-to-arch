@@ -350,6 +350,13 @@ EOF
 	systemctl enable sshd
 	systemctl start sshd
 
+	# cleanup filesystem
+	rm -f /var/cache/pacman/pkg
+	mv /packages /var/cache/pacman/pkg
+	rm -f /.INSTALL /.MTREE /.PKGINFO
+	rm -rf /archroot
+	rm -rf /installer
+
 }
 
 canonicalize_path() {

@@ -330,6 +330,9 @@ installer_main() {
 	trap error_occurred ERR
 	trap exit_cleanup EXIT
 
+	log "Ensuring correct permissions ..."
+	chmod 0700 "${script_path}"
+
 	rm -rf /archroot/installer
 	mkdir -p /archroot/installer
 	cd /archroot/installer

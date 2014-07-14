@@ -271,6 +271,20 @@ Type=oneshot
 ExecStart=/installer/script.sh
 EOF
 
+	mkdir -p ${unitdir}/sysinit.target.wants
+	ln -s ../arch-kernel.service ${unitdir}/sysinit.target.wants
+	cat > ${unitdir}/arch-kernel.service <<EOF
+[Unit]
+Description=Reboots into arch kernel
+ConditionKernelCommandLine=!archkernel
+DefaultDependencies=no
+Before=local-fs-pre.target systemd-remount-fs.service
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/kexec /boot/vmlinuz-linux --initrd=/boot/initramfs-linux.img --reuse-cmdline --command-line=archkernel
+EOF
+
 }
 
 error_occurred() {

@@ -151,23 +151,27 @@ extract_packages() {
 	done
 }
 
-configure_and_bootstrap() {
-
+mount_virtuals() {
 	log "Mounting virtual filesystems ..."
 	mount -t proc proc /archroot/proc
 	mount -t sysfs sys /archroot/sys
 	mount --bind /dev /archroot/dev
 	mount -t devpts pts /archroot/dev/pts
+}
 
-	log "Doing initial configuration ..."
+prebootstrap_configuration() {
+	log "Doing pre-bootstrap configuration ..."
 	rmdir /archroot/var/cache/pacman/pkg
 	ln -s ../../../packages /archroot/var/cache/pacman/pkg
 	chroot /archroot /usr/bin/update-ca-certificates --fresh
+}
+
+bootstrap_system() {
 
 	local shouldbootstrap=false isbootstrapped=false
 	while ! $isbootstrapped; do
 		if $shouldbootstrap; then
-			log "Initial bootstrap ..."
+			log "Bootstrapping system ..."
 			chroot /archroot pacman-key --init
 			chroot /archroot pacman-key --populate archlinux
 			chroot /archroot pacman -Sy --force --noconfirm base openssh kexec-tools
@@ -183,6 +187,10 @@ configure_and_bootstrap() {
 			>> /archroot/etc/pacman.d/mirrorlist
 	done
 
+}
+
+postbootstrap_configuration() {
+	log "Doing post-bootstrap configuration ..."
 }
 
 error_occurred() {
@@ -228,7 +236,10 @@ installer_main() {
 	download_packages
 	extract_packages
 
-	configure_and_bootstrap
+	mount_virtuals
+	prebootstrap_configuration
+	bootstrap_system
+	postbootstrap_configuration
 
 	# prepare for transtiory_main
 	mv /sbin/init /sbin/init.original
@@ -343,6 +354,8 @@ Gateway=${gateway}
 DNS=8.8.8.8
 DNS=8.8.4.4
 EOF
+
+	# enable networkd
 	systemctl enable systemd-networkd
 	systemctl start systemd-networkd
 

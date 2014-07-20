@@ -63,6 +63,45 @@ mask2prefix() {
 	echo ${prefix}
 }
 
+parse_debian_interfaces() {
+	local filename="${1}"  # path to interfaces file
+	local interface="${2}" # interface name
+	local addrtype="${3}"  # inet or inet6
+	local found=false address prefix gateway
+	local kw args
+	while read kw args; do
+		if ! ${found}; then
+			if [ "${kw}" = "iface" ] && \
+			   [ "${args}" = "${interface} ${addrtype} static" ]; then
+				found=true
+			fi
+			continue
+		fi
+		case ${kw} in
+			iface)
+				break
+				;;
+			address)
+				address="${args}"
+				;;
+			netmask)
+				if [ "${args/.}" != "${args}" ]; then
+					prefix=$(mask2prefix "${args}")
+				else
+					prefix="${args}"
+				fi
+				;;
+			gateway)
+				gateway="${args}"
+				;;
+		esac
+	done <"${filename}"
+	echo "local pdi_found=${found};"
+	echo "local pdi_address='${address}';"
+	echo "local pdi_prefix='${prefix}';"
+	echo "local pdi_gateway='${gateway}';"
+}
+
 clean_archroot() {
 	local file
 	local prompted=false
@@ -264,31 +303,63 @@ postbootstrap_configuration() {
 		rm /archroot/etc/shadow.new
 	)
 
-	# set up network
-	local grepfd
-	local ipaddr netmask gateway prefixlen
+	# set up internet network
 	local eni=/etc/network/interfaces
-	exec {grepfd}< <(
-		grep -m 1 -o 'address [0-9.]\+' ${eni}
-		grep -m 1 -o 'netmask [0-9.]\+' ${eni}
-		grep -m 1 -o 'gateway [0-9.]\+' ${eni}
-	)
-	read ignored ipaddr <&${grepfd}
-	read ignored netmask <&${grepfd}
-	read ignored gateway <&${grepfd}
-	exec {grepfd}<&-
-	prefixlen=$(mask2prefix ${netmask})
+	{
+		cat <<-EOF
+			[Match]
+			Name=eth0
 
-	cat > /archroot/etc/systemd/network/internet.network <<EOF
-[Match]
-Name=eth0
+			[Network]
+		EOF
+		# add IPv4 addresses
+		eval "$(parse_debian_interfaces ${eni} eth0 inet)"
+		local v4_found=${pdi_found}
+		if ${v4_found}; then
+			cat <<-EOF
+				Address=${pdi_address}/${pdi_prefix}
+				Gateway=${pdi_gateway}
+			EOF
+		else
+			log "Failed to determine IPv4 settings!"
+		fi
+		# add IPv6 addresses
+		eval "$(parse_debian_interfaces ${eni} eth0 inet6)"
+		local v6_found=${pdi_found}
+		if ${v6_found}; then
+			cat <<-EOF
+				Address=${pdi_address}/${pdi_prefix}
+				Gateway=${pdi_gateway}
+			EOF
+		fi
+		# add DNS servers
+		if ${v6_found}; then
+			cat <<-EOF
+				DNS=2001:4860:4860::8888
+				DNS=2001:4860:4860::8844
+			EOF
+		else
+			cat <<-EOF
+				DNS=8.8.8.8
+				DNS=8.8.4.4
+			EOF
+		fi
+		cat <<-EOF
+			DNS=209.244.0.3
+		EOF
+	} >/archroot/etc/systemd/network/internet.network
 
-[Network]
-Address=${ipaddr}/${prefixlen}
-Gateway=${gateway}
-DNS=8.8.8.8
-DNS=8.8.4.4
-EOF
+	# set up private network
+	eval "$(parse_debian_interfaces ${eni} eth1 inet)"
+	if ${pdi_found}; then
+		cat >/archroot/etc/systemd/network/private <<-EOF
+			[Match]
+			Name=eth1
+
+			[Network]
+			Address=${pdi_address}/${pdi_prefix}
+		EOF
+	fi
 
 	# copy over ssh keys
 	cp -p /etc/ssh/ssh_*_key{,.pub} /archroot/etc/ssh/

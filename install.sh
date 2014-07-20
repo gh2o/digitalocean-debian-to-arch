@@ -4,19 +4,36 @@
 ### INSTRUCTIONS AT https://github.com/gh2o/digitalocean-debian-to-arch/     ###
 ################################################################################
 
+run_from_file() {
+	local f t
+	for f in /dev/fd/*; do
+		[ -h ${f} ] || continue
+		[ ${f} -ef "${0}" ] && return
+	done
+	t=$(mktemp)
+	cat >${t}
+	if [ "$(head -n 1 ${t})" = '#!/bin/bash' ]; then
+		chmod +x ${t}
+		exec /bin/bash ${t} "$@" </dev/fd/2
+	else
+		rm -f ${t}
+		echo "Direct execution not supported with this shell ($_)."
+		echo "Please try bash instead."
+		exit 1
+	fi
+}
+
+# do not modify the two lines below
+run_from_file
+#!/bin/bash
+
 ### CONFIGURATION
 archlinux_mirror="https://mirrors.kernel.org/archlinux/"
 preserve_home_directories=true
 
-stdin_symlink="$(readlink /dev/fd/0)"
-if [ "${stdin_symlink#pipe:}" != "${stdin_symlink}" ]; then
-	echo "This script must be run from a file. Exiting." >&2
-	exit 1
-fi
-
 if [ -n "${POSIXLY_CORRECT}" ] || [ -z "${BASH_VERSION}" ]; then
 	unset POSIXLY_CORRECT
-	exec bash "$0" "$@"
+	exec /bin/bash "${0}" "$@"
 	exit 1
 fi
 

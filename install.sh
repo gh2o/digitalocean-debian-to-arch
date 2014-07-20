@@ -238,9 +238,9 @@ postbootstrap_configuration() {
 	local ipaddr netmask gateway prefixlen=24
 	local eni=/etc/network/interfaces
 	exec {grepfd}< <(
-		grep -o 'address [0-9.]\+' ${eni}
-		grep -o 'netmask [0-9.]\+' ${eni}
-		grep -o 'gateway [0-9.]\+' ${eni}
+		grep -m 1 -o 'address [0-9.]\+' ${eni}
+		grep -m 1 -o 'netmask [0-9.]\+' ${eni}
+		grep -m 1 -o 'gateway [0-9.]\+' ${eni}
 	)
 	read ignored ipaddr <&${grepfd}
 	read ignored netmask <&${grepfd}

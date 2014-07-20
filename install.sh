@@ -17,8 +17,8 @@ run_from_file() {
 		exec /bin/bash ${t} "$@" </dev/fd/2
 	else
 		rm -f ${t}
-		echo "Direct execution not supported with this shell ($_)."
-		echo "Please try bash instead."
+		echo "Direct execution not supported with this shell ($_)." >&2
+		echo "Please try bash instead." >&2
 		exit 1
 	fi
 }

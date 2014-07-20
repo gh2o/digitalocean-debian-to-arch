@@ -39,9 +39,3 @@ Advanced Configuration
 ----------------------
 * You may set `archlinux_mirror` in the script to a mirror closer to your
   droplet's datacenter for a faster installation.
-
-Known Issues
-------------
-* IPv6 settings are not migrated.
-* Private networking settings are not migrated.
-* Hostname is reset to `localhost`.

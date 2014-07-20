@@ -24,7 +24,7 @@ run_from_file() {
 }
 
 # do not modify the two lines below
-run_from_file
+[ -h /dev/fd/0 ] && run_from_file
 #!/bin/bash
 
 ### CONFIGURATION
@@ -246,10 +246,10 @@ postbootstrap_configuration() {
 	# set up shadow
 	(
 		umask 077
-		(
+		{
 			grep    '^root:' /etc/shadow
 			grep -v '^root:' /archroot/etc/shadow
-		) > /archroot/etc/shadow.new
+		} > /archroot/etc/shadow.new
 		cat /archroot/etc/shadow.new > /archroot/etc/shadow
 		rm /archroot/etc/shadow.new
 	)

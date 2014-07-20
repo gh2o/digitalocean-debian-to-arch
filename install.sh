@@ -1,5 +1,9 @@
 #!/bin/bash
 
+################################################################################
+### INSTRUCTIONS AT https://github.com/gh2o/digitalocean-debian-to-arch/     ###
+################################################################################
+
 ### CONFIGURATION
 archlinux_mirror="https://mirrors.kernel.org/archlinux/"
 preserve_home_directories=true

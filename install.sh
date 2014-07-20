@@ -292,6 +292,9 @@ postbootstrap_configuration() {
 	# set up fstab
 	echo "LABEL=DOROOT / ext4 defaults 0 1" >> /archroot/etc/fstab
 
+	# set up hostname
+	[ -e /etc/hostname ] && cp /etc/hostname /archroot/etc/hostname
+
 	# set up shadow
 	(
 		umask 077

@@ -352,7 +352,7 @@ postbootstrap_configuration() {
 	# set up private network
 	eval "$(parse_debian_interfaces ${eni} eth1 inet)"
 	if ${pdi_found}; then
-		cat >/archroot/etc/systemd/network/private <<-EOF
+		cat >/archroot/etc/systemd/network/private.network <<-EOF
 			[Match]
 			Name=eth1
 

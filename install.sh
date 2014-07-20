@@ -267,17 +267,28 @@ postbootstrap_configuration() {
 	read ignored netmask <&${grepfd}
 	read ignored gateway <&${grepfd}
 	exec {grepfd}<&-
-	case ${netmask} in
-		255.255.255.0)
-			prefixlen=24
-			;;
-		255.255.240.0)
-			prefixlen=20
-			;;
-		255.255.0.0)
-			prefixlen=16
-			;;
-	esac
+	mask2cidr() {
+            nbits=0
+            IFS=.
+            for dec in $1 ; do
+                case $dec in
+                    255) let nbits+=8;;
+                    254) let nbits+=7;;
+                    252) let nbits+=6;;
+                    248) let nbits+=5;;
+                    240) let nbits+=4;;
+                    224) let nbits+=3;;
+                    192) let nbits+=2;;
+                    128) let nbits+=1;;
+                    0);;
+                    *) echo "Error: $dec is not recognised"; exit 1
+                esac
+            done
+            echo "$nbits"
+        }
+
+        prefixlen=$(mask2cidr ${netmask})
+        
 	cat > /archroot/etc/systemd/network/internet.network <<EOF
 [Match]
 Name=eth0

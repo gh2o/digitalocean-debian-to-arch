@@ -67,7 +67,7 @@ parse_debian_interfaces() {
 	local filename="${1}"  # path to interfaces file
 	local interface="${2}" # interface name
 	local addrtype="${3}"  # inet or inet6
-	local found=false address prefix gateway
+	local found=false address= prefix= gateway=
 	local kw args
 	while read kw args; do
 		if ! ${found}; then

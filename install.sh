@@ -334,11 +334,11 @@ EOF
 
 }
 
-error_occurred() {
+installer_error_occurred() {
 	log "Error occurred. Exiting."
 }
 
-exit_cleanup() {
+installer_exit_cleanup() {
 	log "Cleaning up ..."
 	set +e
 	umount /archroot/dev/pts
@@ -364,8 +364,8 @@ installer_main() {
 		exit 1
 	fi
 
-	trap error_occurred ERR
-	trap exit_cleanup EXIT
+	trap installer_error_occurred ERR
+	trap installer_exit_cleanup EXIT
 
 	log "Ensuring correct permissions ..."
 	chmod 0700 "${script_path}"
@@ -394,8 +394,15 @@ installer_main() {
 
 }
 
+transitory_exit_occurred() {
+	# not normally called
+	log "Error occurred! You're on your own."
+	exec /bin/bash
+}
+
 transitory_main() {
 
+	trap transitory_exit_occurred EXIT
 	if [ "${script_path}" = "/sbin/init" ]; then
 		# save script
 		mount -o remount,rw /

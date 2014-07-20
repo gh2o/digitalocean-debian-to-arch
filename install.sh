@@ -53,6 +53,16 @@ log() {
 	echo "[$(date)]" "$@" >&2
 }
 
+mask2prefix() {
+	local prefix=0 netmask=${1}
+	for octet in ${netmask//./ }; do
+		for bitmask in 128 64 32 16 8 4 2 1; do
+			(( $bitmask & $octet )) && (( prefix+=1 )) || break 2
+		done
+	done
+	echo ${prefix}
+}
+
 clean_archroot() {
 	local file
 	local prompted=false
@@ -256,7 +266,7 @@ postbootstrap_configuration() {
 
 	# set up network
 	local grepfd
-	local ipaddr netmask gateway prefixlen=24
+	local ipaddr netmask gateway prefixlen
 	local eni=/etc/network/interfaces
 	exec {grepfd}< <(
 		grep -m 1 -o 'address [0-9.]\+' ${eni}
@@ -267,28 +277,8 @@ postbootstrap_configuration() {
 	read ignored netmask <&${grepfd}
 	read ignored gateway <&${grepfd}
 	exec {grepfd}<&-
-	mask2cidr() {
-            nbits=0
-            IFS=.
-            for dec in $1 ; do
-                case $dec in
-                    255) let nbits+=8;;
-                    254) let nbits+=7;;
-                    252) let nbits+=6;;
-                    248) let nbits+=5;;
-                    240) let nbits+=4;;
-                    224) let nbits+=3;;
-                    192) let nbits+=2;;
-                    128) let nbits+=1;;
-                    0);;
-                    *) echo "Error: $dec is not recognised"; exit 1
-                esac
-            done
-            echo "$nbits"
-        }
+	prefixlen=$(mask2prefix ${netmask})
 
-        prefixlen=$(mask2cidr ${netmask})
-        
 	cat > /archroot/etc/systemd/network/internet.network <<EOF
 [Match]
 Name=eth0

@@ -569,3 +569,5 @@ elif [ "${script_path}" = "/installer/script.sh" ]; then
 else
 	installer_main "$@"
 fi
+exit 0 # in case junk appended
+exit 0

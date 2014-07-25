@@ -114,8 +114,8 @@ clean_archroot() {
 			log "Your /archroot directory contains a stale installation or other data."
 			log "Remove it?"
 			local response
-			read -p '(yes or [no]) ' response
-			if [ "${response}" = "yes" ]; then
+			read -p '([yes] or no) ' response
+			if [[ "yes" == "${response}"* ]]; then
 				prompted=true
 			else
 				break
@@ -134,7 +134,7 @@ install_haveged() {
 	log "to speed it up?"
 	local response
 	read -p '([yes] or no) ' response
-	if [ "${response}" = "yes" ] || [ -z "${response}" ]; then
+	if [[ "yes" == "${response}"* ]]; then
 		apt-get -y install haveged
 	fi
 }

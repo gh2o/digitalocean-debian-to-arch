@@ -374,6 +374,9 @@ postbootstrap_configuration() {
 		cp -al /{home,root} /archroot/
 	fi
 
+	# setup machine id
+	chroot /archroot systemd-machine-id-setup
+
 	# enable services
 	chroot /archroot systemctl enable systemd-networkd
 	chroot /archroot systemctl enable sshd

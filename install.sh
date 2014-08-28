@@ -30,6 +30,7 @@ run_from_file() {
 ### CONFIGURATION
 archlinux_mirror="https://mirrors.kernel.org/archlinux/"
 preserve_home_directories=true
+target_architecture="$(uname -m)"
 
 if [ -n "${POSIXLY_CORRECT}" ] || [ -z "${BASH_VERSION}" ]; then
 	unset POSIXLY_CORRECT
@@ -141,7 +142,7 @@ install_haveged() {
 
 initialize_coredb() {
 	log "Downloading package database ..."
-	wget "${archlinux_mirror}/core/os/x86_64/core.db"
+	wget "${archlinux_mirror}/core/os/${target_architecture}/core.db"
 	log "Unpacking package database ..."
 	mkdir core
 	tar -zxf core.db -C core
@@ -228,7 +229,7 @@ download_packages() {
 		if [ -e "${localfn}" ] && ( echo "${sha256}  ${localfn}" | sha256sum -c ); then
 			continue
 		fi
-		wget "${archlinux_mirror}/core/os/x86_64/${filename}" -O "${localfn}"
+		wget "${archlinux_mirror}/core/os/${target_architecture}/${filename}" -O "${localfn}"
 		if [ -e "${localfn}" ] && ( echo "${sha256}  ${localfn}" | sha256sum -c ); then
 			continue
 		fi
@@ -430,11 +431,6 @@ installer_main() {
 
 	if ! grep -q '^7\.' /etc/debian_version; then
 		log "This script only supports Debian 7.x. Exiting."
-		exit 1
-	fi
-
-	if [ "$(uname -m)" != "x86_64" ]; then
-		log "This script only targets 64-bit machines. Exiting."
 		exit 1
 	fi
 

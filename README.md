@@ -15,7 +15,7 @@ running this script on newly created droplets with no important data.
 
 Installation
 ------------
-1. Create a new Debian 7.0 x64 droplet.
+1. Create a new Debian 7.0 droplet (either 32-bit or 64-bit works).
 2. In the droplet (either SSH or console access works),
    run the following as root:
     ```wget https://raw.githubusercontent.com/gh2o/digitalocean-debian-to-arch/master/install.sh && bash install.sh```

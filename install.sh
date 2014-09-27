@@ -178,6 +178,7 @@ get_package_directory() {
 		done < <(get_package_array ${dir}/depends PROVIDES)
 	done
 	log "Package '${1}' not found."
+	return 1
 }
 
 get_package_value() {

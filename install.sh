@@ -148,19 +148,27 @@ initialize_coredb() {
 	tar -zxf core.db -C core
 }
 
+initialize_extradb() {
+	log "Downloading package database ..."
+	wget "${archlinux_mirror}/extra/os/${target_architecture}/extra.db"
+	log "Unpacking package database ..."
+	mkdir extra
+	tar -zxf extra.db -C extra
+}
+
 remove_version() {
 	echo "${1}" | grep -o '^[A-Za-z0-9_-]*'
 }
 
 get_package_directory() {
 	local dir pkg
-	for dir in core/${1}-*; do
+	for dir in core/${1}-* extra/${1}-*; do
 		if [ "$(get_package_value ${dir}/desc NAME)" = "${1}" ]; then
 			echo "${dir}"
 			return
 		fi
 	done
-	for dir in core/*; do
+	for dir in core/* extra/*; do
 		while read pkg; do
 			pkg=$(remove_version "${pkg}")
 			if [ "${pkg}" = "${1}" ]; then
@@ -229,7 +237,7 @@ download_packages() {
 		if [ -e "${localfn}" ] && ( echo "${sha256}  ${localfn}" | sha256sum -c ); then
 			continue
 		fi
-		wget "${archlinux_mirror}/core/os/${target_architecture}/${filename}" -O "${localfn}"
+		wget "${archlinux_mirror}/pool/packages/${filename}" -O "${localfn}"
 		if [ -e "${localfn}" ] && ( echo "${sha256}  ${localfn}" | sha256sum -c ); then
 			continue
 		fi
@@ -451,6 +459,7 @@ installer_main() {
 	install_haveged
 
 	initialize_coredb
+	initialize_extradb
 	calculate_dependencies
 	download_packages
 	extract_packages

@@ -47,8 +47,11 @@ export LC_ALL=C
 export LANG=C
 unset LANGUAGE
 
+declare -a repositories
+repositories=(core extra)
 declare -A dependencies
 dependencies[pacman]=x
+declare -A pkgdircache
 
 log() {
 	echo "[$(date)]" "$@" >&2
@@ -140,45 +143,60 @@ install_haveged() {
 	fi
 }
 
-initialize_coredb() {
-	log "Downloading package database ..."
-	wget "${archlinux_mirror}/core/os/${target_architecture}/core.db"
-	log "Unpacking package database ..."
-	mkdir core
-	tar -zxf core.db -C core
-}
-
-initialize_extradb() {
-	log "Downloading package database ..."
-	wget "${archlinux_mirror}/extra/os/${target_architecture}/extra.db"
-	log "Unpacking package database ..."
-	mkdir extra
-	tar -zxf extra.db -C extra
-}
-
 remove_version() {
 	echo "${1}" | grep -o '^[A-Za-z0-9_-]*'
 }
 
-get_package_directory() {
-	local dir pkg
-	for dir in core/${1}-* extra/${1}-*; do
-		if [ "$(get_package_value ${dir}/desc NAME)" = "${1}" ]; then
-			echo "${dir}"
-			return
-		fi
+initialize_databases() {
+	local repo dir pkg
+	for repo in "${repositories[@]}"; do
+		log "Downloading package database '${repo}' ..."
+		wget "${archlinux_mirror}/${repo}/os/${target_architecture}/${repo}.db"
+		log "Unpacking package database '${repo}' ..."
+		mkdir ${repo}
+		tar -zxf ${repo}.db -C ${repo}
 	done
-	for dir in core/* extra/*; do
-		while read pkg; do
-			pkg=$(remove_version "${pkg}")
-			if [ "${pkg}" = "${1}" ]; then
+}
+
+get_package_directory() {
+
+	local req="${1}"
+	local repo dir pkg
+
+	dir="${pkgdircache[${req}]:-}"
+	if [ -n "${dir}" ]; then
+		echo "${dir}"
+		return
+	fi
+
+	for repo in "${repositories[@]}"; do
+		for dir in ${repo}/${req}-*; do
+			pkg="$(get_package_value ${dir}/desc NAME)" 
+			pkgdircache[${pkg}]="${dir}"
+			if [ "${pkg}" = "${req}" ]; then
 				echo "${dir}"
 				return
 			fi
-		done < <(get_package_array ${dir}/depends PROVIDES)
+		done
 	done
-	log "Package '${1}' not found."
-	return 1
+
+	for repo in "${repositories[@]}"; do
+		for dir in ${repo}/*; do
+			while read pkg; do
+				pkg=$(remove_version "${pkg}")
+				[ -z "${pkgdircache[${pkg}]:-}" ] &&
+					pkgdircache[${pkg}]="${dir}"
+				if [ "${pkg}" = "${req}" ]; then
+					echo "${dir}"
+					return
+				fi
+			done < <(get_package_array ${dir}/depends PROVIDES)
+		done
+	done
+
+	log "Package '${req}' not found."
+	false
+
 }
 
 get_package_value() {
@@ -459,8 +477,7 @@ installer_main() {
 	clean_archroot
 	install_haveged
 
-	initialize_coredb
-	initialize_extradb
+	initialize_databases
 	calculate_dependencies
 	download_packages
 	extract_packages

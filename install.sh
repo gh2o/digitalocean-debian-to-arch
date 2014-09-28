@@ -57,7 +57,7 @@ log() {
 	echo "[$(date)]" "$@" >&2
 }
 
-mask2prefix() {
+mask_to_prefix() {
 	local prefix=0 netmask=${1}
 	for octet in ${netmask//./ }; do
 		for bitmask in 128 64 32 16 8 4 2 1; do
@@ -90,7 +90,7 @@ parse_debian_interfaces() {
 				;;
 			netmask)
 				if [ "${args/.}" != "${args}" ]; then
-					prefix=$(mask2prefix "${args}")
+					prefix=$(mask_to_prefix "${args}")
 				else
 					prefix="${args}"
 				fi

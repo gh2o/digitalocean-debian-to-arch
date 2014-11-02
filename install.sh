@@ -27,10 +27,25 @@ run_from_file() {
 [ -h /dev/fd/0 ] && run_from_file
 #!/bin/bash
 
-### CONFIGURATION
+########################################
+### CONFIGURATION                    ###
+########################################
+
+# mirror from which to download packages
 archlinux_mirror="https://mirrors.kernel.org/archlinux/"
+
+# migrate over home directories
 preserve_home_directories=true
+
+# package to use as kernel (linux or linux-lts)
+kernel_package=linux
+
+# migrated machine architecture
 target_architecture="$(uname -m)"
+
+########################################
+### END OF CONFIGURATION             ###
+########################################
 
 if [ -n "${POSIXLY_CORRECT}" ] || [ -z "${BASH_VERSION}" ]; then
 	unset POSIXLY_CORRECT
@@ -298,7 +313,10 @@ bootstrap_system() {
 			log "Bootstrapping system ..."
 			chroot /archroot pacman-key --init
 			chroot /archroot pacman-key --populate archlinux
-			chroot /archroot pacman -Sy --force --noconfirm base openssh kexec-tools
+			chroot /archroot pacman -Sy
+			chroot /archroot pacman -S --force --noconfirm \
+				$(chroot /archroot pacman -Sgq base | grep -Fvx linux) \
+				${kernel_package} openssh kexec-tools
 			isbootstrapped=true
 		else
 			shouldbootstrap=true
@@ -434,7 +452,7 @@ Before=local-fs-pre.target systemd-remount-fs.service
 
 [Service]
 Type=oneshot
-ExecStart=/sbin/kexec /boot/vmlinuz-linux --initrd=/boot/initramfs-linux.img --reuse-cmdline --command-line=archkernel
+ExecStart=/sbin/kexec /boot/vmlinuz-${kernel_package} --initrd=/boot/initramfs-${kernel_package}.img --reuse-cmdline --command-line=archkernel
 EOF
 
 }

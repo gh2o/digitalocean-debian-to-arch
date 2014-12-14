@@ -66,6 +66,7 @@ declare -a repositories
 repositories=(core extra)
 declare -A dependencies
 dependencies[pacman]=x
+dependencies[coreutils]=x
 declare -A pkgdircache
 
 log() {
@@ -302,7 +303,7 @@ prebootstrap_configuration() {
 	log "Doing pre-bootstrap configuration ..."
 	rmdir /archroot/var/cache/pacman/pkg
 	ln -s ../../../packages /archroot/var/cache/pacman/pkg
-	chroot /archroot /usr/bin/update-ca-certificates --fresh
+	chroot /archroot /sbin/trust extract-compat
 }
 
 bootstrap_system() {

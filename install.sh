@@ -57,6 +57,7 @@ set -eu
 set -o pipefail
 shopt -s nullglob
 shopt -s dotglob
+umask 022
 
 export LC_ALL=C
 export LANG=C
@@ -81,6 +82,70 @@ mask_to_prefix() {
 		done
 	done
 	echo ${prefix}
+}
+
+install_compat_package() {
+
+	local workdir=$(mktemp -d)
+	local unitdir=${workdir}/usr/lib/systemd/system
+	local kexeccmd
+
+	set -- /sbin/kexec \
+		/boot/vmlinuz-${kernel_package} \
+		--initrd=/boot/initramfs-${kernel_package}.img \
+		--reuse-cmdline \
+		--command-line=archkernel
+	kexeccmd="$*"
+
+	cat > ${workdir}/.PKGINFO <<-'EOF'
+		pkgname = digitalocean-debian-compat
+		pkgver = 1.0-1
+		pkgdesc = Compatibility files to run Arch Linux as a Debian distro on DigitalOcean
+		url = https://github.com/gh2o/digitalocean-debian-to-arch
+		arch = any
+		license = GPL
+	EOF
+
+	mkdir -p ${unitdir}/sysinit.target.wants/
+	ln -s ../arch-kernel.service ${unitdir}/sysinit.target.wants/
+	cat > ${unitdir}/arch-kernel.service <<-EOF
+		[Unit]
+		Description=Reboots into Arch kernel
+		ConditionKernelCommandLine=!archkernel
+		DefaultDependencies=no
+		Before=local-fs-pre.target systemd-remount-fs.service
+
+		[Service]
+		Type=oneshot
+		ExecStart=${kexeccmd}
+	EOF
+
+	mkdir -p ${unitdir}/multi-user.target.wants/
+	ln -s ../debian-interfaces.service ${unitdir}/multi-user.target.wants/
+	cat > ${unitdir}/debian-interfaces.service <<-EOF
+		[Unit]
+		Description=Parses /etc/network/interfaces into .network files for systemd-networkd
+		DefaultDependencies=no
+		Before=systemd-networkd.service
+
+		[Service]
+		Type=oneshot
+		ExecStart=/usr/sbin/parse-debian-interfaces
+	EOF
+
+	mkdir -p ${workdir}/usr/bin/
+	cat > ${workdir}/usr/bin/parse-debian-interfaces <<-EOF
+		#!/bin/bash
+		set -eu
+		set -o pipefail
+		echo ENIENIENIENI > /dev/kmsg
+	EOF
+	chmod 0755 ${workdir}/usr/bin/parse-debian-interfaces
+
+	( cd ${workdir} && bsdtar -cf compat.pkg.tar * )
+	pacman -U --noconfirm ${workdir}/compat.pkg.tar
+	rm -rf ${workdir}
+
 }
 
 parse_debian_interfaces() {
@@ -431,29 +496,15 @@ postbootstrap_configuration() {
 	local unitdir=/archroot/etc/systemd/system
 
 	mkdir -p ${unitdir}/basic.target.wants
-	ln -s ../installer-cleanup.service ${unitdir}/basic.target.wants/
-	cat > ${unitdir}/installer-cleanup.service <<EOF
+	ln -s ../installer-finalize.service ${unitdir}/basic.target.wants/
+	cat > ${unitdir}/installer-finalize.service <<EOF
 [Unit]
-Description=Post-install cleanup
+Description=Post-install finalization
 ConditionPathExists=/installer/script.sh
 
 [Service]
 Type=oneshot
 ExecStart=/installer/script.sh
-EOF
-
-	mkdir -p ${unitdir}/sysinit.target.wants
-	ln -s ../arch-kernel.service ${unitdir}/sysinit.target.wants
-	cat > ${unitdir}/arch-kernel.service <<EOF
-[Unit]
-Description=Reboots into arch kernel
-ConditionKernelCommandLine=!archkernel
-DefaultDependencies=no
-Before=local-fs-pre.target systemd-remount-fs.service
-
-[Service]
-Type=oneshot
-ExecStart=/sbin/kexec /boot/vmlinuz-${kernel_package} --initrd=/boot/initramfs-${kernel_package}.img --reuse-cmdline --command-line=archkernel
 EOF
 
 }
@@ -579,12 +630,16 @@ transitory_main() {
 
 }
 
-postinstall_main() {
+finalize_main() {
 
-	# remove cleanup service
+	# install compatibility package
+	install_compat_package
+
+	# remove finalization service
 	local unitdir=/etc/systemd/system
-	rm -f ${unitdir}/installer-cleanup.service
-	rm -f ${unitdir}/basic.target.wants/installer-cleanup.service
+	rm -f ${unitdir}/installer-finalize.service
+	rm -f ${unitdir}/basic.target.wants/installer-finalize.service
+	rmdir ${unitdir}/basic.target.wants || true
 
 	# cleanup filesystem
 	rm -f /var/cache/pacman/pkg
@@ -592,6 +647,10 @@ postinstall_main() {
 	rm -f /.INSTALL /.MTREE /.PKGINFO
 	rm -rf /archroot
 	rm -rf /installer
+
+	# restart into new kernel
+	systemctl daemon-reload
+	systemctl start arch-kernel.service
 
 }
 
@@ -610,7 +669,7 @@ if [ $$ -eq 1 ]; then
 elif [ "${script_path}" = "/sbin/init" ]; then
 	exec /sbin/init.original "$@"
 elif [ "${script_path}" = "/installer/script.sh" ]; then
-	postinstall_main "$@"
+	finalize_main "$@"
 else
 	installer_main "$@"
 fi

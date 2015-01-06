@@ -78,16 +78,6 @@ extract_embedded_file() {
 	gawk -e '$0=="!!!!"{p=0};p;$0=="!!!!"n{p=1}' n="${1}" "${script_path}"
 }
 
-mask_to_prefix() {
-	local prefix=0 netmask=${1}
-	for octet in ${netmask//./ }; do
-		for bitmask in 128 64 32 16 8 4 2 1; do
-			(( $bitmask & $octet )) && (( prefix+=1 )) || break 2
-		done
-	done
-	echo ${prefix}
-}
-
 install_compat_package() {
 
 	local workdir=$(mktemp -d)
@@ -146,45 +136,6 @@ install_compat_package() {
 	pacman -U --noconfirm ${workdir}/compat.pkg.tar
 	rm -rf ${workdir}
 
-}
-
-parse_debian_interfaces() {
-	local filename="${1}"  # path to interfaces file
-	local interface="${2}" # interface name
-	local addrtype="${3}"  # inet or inet6
-	local found=false address= prefix= gateway=
-	local kw args
-	while read kw args; do
-		if ! ${found}; then
-			if [ "${kw}" = "iface" ] && \
-			   [ "${args}" = "${interface} ${addrtype} static" ]; then
-				found=true
-			fi
-			continue
-		fi
-		case ${kw} in
-			iface)
-				break
-				;;
-			address)
-				address="${args}"
-				;;
-			netmask)
-				if [ "${args/.}" != "${args}" ]; then
-					prefix=$(mask_to_prefix "${args}")
-				else
-					prefix="${args}"
-				fi
-				;;
-			gateway)
-				gateway="${args}"
-				;;
-		esac
-	done <"${filename}"
-	echo "local pdi_found=${found};"
-	echo "local pdi_address='${address}';"
-	echo "local pdi_prefix='${prefix}';"
-	echo "local pdi_gateway='${gateway}';"
 }
 
 clean_archroot() {
@@ -421,64 +372,6 @@ postbootstrap_configuration() {
 	# copy interfaces file
 	mkdir -p /archroot/etc/network/
 	cp /etc/network/interfaces /archroot/etc/network/interfaces
-
-	# set up internet network
-	local eni=/etc/network/interfaces
-	{
-		cat <<-EOF
-			[Match]
-			Name=eth0
-
-			[Network]
-		EOF
-		# add IPv4 addresses
-		eval "$(parse_debian_interfaces ${eni} eth0 inet)"
-		local v4_found=${pdi_found}
-		if ${v4_found}; then
-			cat <<-EOF
-				Address=${pdi_address}/${pdi_prefix}
-				Gateway=${pdi_gateway}
-			EOF
-		else
-			log "Failed to determine IPv4 settings!"
-		fi
-		# add IPv6 addresses
-		eval "$(parse_debian_interfaces ${eni} eth0 inet6)"
-		local v6_found=${pdi_found}
-		if ${v6_found}; then
-			cat <<-EOF
-				Address=${pdi_address}/${pdi_prefix}
-				Gateway=${pdi_gateway}
-			EOF
-		fi
-		# add DNS servers
-		if ${v6_found}; then
-			cat <<-EOF
-				DNS=2001:4860:4860::8888
-				DNS=2001:4860:4860::8844
-			EOF
-		else
-			cat <<-EOF
-				DNS=8.8.8.8
-				DNS=8.8.4.4
-			EOF
-		fi
-		cat <<-EOF
-			DNS=209.244.0.3
-		EOF
-	} >/archroot/etc/systemd/network/internet.network
-
-	# set up private network
-	eval "$(parse_debian_interfaces ${eni} eth1 inet)"
-	if ${pdi_found}; then
-		cat >/archroot/etc/systemd/network/private.network <<-EOF
-			[Match]
-			Name=eth1
-
-			[Network]
-			Address=${pdi_address}/${pdi_prefix}
-		EOF
-	fi
 
 	# copy over ssh keys
 	cp -p /etc/ssh/ssh_*_key{,.pub} /archroot/etc/ssh/

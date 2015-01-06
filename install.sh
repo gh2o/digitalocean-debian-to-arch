@@ -124,7 +124,7 @@ install_compat_package() {
 
 		[Service]
 		Type=oneshot
-		ExecStart=/usr/sbin/parse-debian-interfaces
+		ExecStart=/usr/sbin/parse-debian-interfaces /etc/network/interfaces
 	EOF
 
 	mkdir -p ${workdir}/usr/bin/

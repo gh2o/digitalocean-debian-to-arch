@@ -369,6 +369,9 @@ postbootstrap_configuration() {
 		rm /archroot/etc/shadow.new
 	)
 
+	# manage resolv.conf with systemd-resolved
+	ln -sf ../run/systemd/resolve/resolv.conf /archroot/etc/resolv.conf
+
 	# copy interfaces file
 	mkdir -p /archroot/etc/network/
 	cp /etc/network/interfaces /archroot/etc/network/interfaces
@@ -386,6 +389,7 @@ postbootstrap_configuration() {
 	chroot /archroot systemd-machine-id-setup
 
 	# enable services
+	chroot /archroot systemctl enable systemd-resolved
 	chroot /archroot systemctl enable systemd-networkd
 	chroot /archroot systemctl enable sshd
 

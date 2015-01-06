@@ -434,9 +434,6 @@ installer_main() {
 	trap installer_error_occurred ERR
 	trap installer_exit_cleanup EXIT
 
-	log "Ensuring correct permissions ..."
-	chmod 0700 "${script_path}"
-
 	rm -rf /archroot/installer
 	mkdir -p /archroot/installer
 	cd /archroot/installer
@@ -457,6 +454,7 @@ installer_main() {
 	# prepare for transtiory_main
 	mv /sbin/init /sbin/init.original
 	cp "${script_path}" /sbin/init
+	chmod 0755 /sbin/init
 	reboot
 
 }
@@ -470,7 +468,7 @@ transitory_exit_occurred() {
 transitory_main() {
 
 	trap transitory_exit_occurred EXIT
-	if [ "${script_path}" = "/sbin/init" ]; then
+	if [ -e /etc/debian_version ]; then
 		# save script
 		mount -o remount,rw /
 		cp "${script_path}" /archroot/installer/script.sh
@@ -492,7 +490,7 @@ transitory_main() {
 		mount --bind / /archroot/realroot
 		# chroot into archroot
 		exec chroot /archroot /installer/script.sh
-	elif [ "${script_path}" = "/installer/script.sh" ]; then
+	elif [ -e /etc/arch-release ]; then
 		# now in archroot
 		local oldroot=/realroot/archroot/oldroot
 		mkdir ${oldroot}
@@ -562,13 +560,22 @@ canonicalize_path() {
 
 script_path="$(canonicalize_path "${0}")"
 if [ $$ -eq 1 ]; then
-	transitory_main "$@"
-elif [ "${script_path}" = "/sbin/init" ]; then
-	exec /sbin/init.original "$@"
-elif [ "${script_path}" = "/installer/script.sh" ]; then
-	finalize_main "$@"
+	transitory_main
+elif [ -e /etc/debian_version ]; then
+	if [ "$(basename "${0}")" = "init" ]; then
+		exec /sbin/init.original "$@"
+	else
+		installer_main
+	fi
+elif [ -e /etc/arch-release ]; then
+	if [ -d /installer ]; then
+		finalize_main
+	else
+		install_compat_package
+	fi
 else
-	installer_main "$@"
+	log "Don't know what to do!"
+	exit 1
 fi
 exit 0
 

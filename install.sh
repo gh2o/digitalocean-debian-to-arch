@@ -413,6 +413,13 @@ installer_error_occurred() {
 installer_exit_cleanup() {
 	log "Cleaning up ..."
 	set +e
+	for rt in /proc/*/root; do
+		if [ -h ${rt} ] && [ "$(readlink ${rt})" = "/archroot" ]; then
+			rt=${rt#/proc/}
+			rt=${rt%/root}
+			kill -9 ${rt}
+		fi
+	done
 	umount /archroot/dev/pts
 	umount /archroot/dev
 	umount /archroot/sys

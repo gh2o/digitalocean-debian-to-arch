@@ -319,7 +319,15 @@ prebootstrap_configuration() {
 	log "Doing pre-bootstrap configuration ..."
 	rmdir /archroot/var/cache/pacman/pkg
 	ln -s ../../../packages /archroot/var/cache/pacman/pkg
-	chroot /archroot /sbin/trust extract-compat
+	chroot /archroot /usr/bin/update-ca-trust
+	# XXX WORKAROUND: ca-certificate-utils-20150402-1 removes
+	#   /etc/ssl/certs/ca-certificates.crt, which is needed
+	#   by curl, which is used by pacman. Until curl updates
+	#   its CA path (or the file gets created again), we must
+	#   create it ourselves.
+	local cafile=/etc/ssl/certs/ca-certificates.crt
+	local catarget=../../ca-certificates/extracted/tls-ca-bundle.pem
+	[ -e /archroot/${cafile} ] || ln -s ${catarget} /archroot/${cafile}
 }
 
 bootstrap_system() {

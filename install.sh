@@ -393,8 +393,8 @@ postbootstrap_configuration() {
 		cp -al /{home,root} /archroot/
 	fi
 	
-	# authorized_keys of root will be copied anyway
-	if [ -e /root/.ssh/authorized_keys ]; then
+	# just authorized_keys of root will be copied otherwise
+	if ! ${preserve_home_directories} && [ -e /root/.ssh/authorized_keys ]; then
 		mkdir -p /archroot/root/.ssh/
 		chmod 700 /archroot/root/.ssh/
 		cp -p /root/.ssh/authorized_keys /archroot/root/.ssh/authorized_keys

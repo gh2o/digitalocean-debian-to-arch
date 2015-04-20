@@ -394,9 +394,11 @@ postbootstrap_configuration() {
 	fi
 	
 	# authorized_keys of root will be copied anyway
-	mkdir -p /archroot/root/.ssh/
-	chmod 700 /archroot/root/.ssh/
-	cp -p /root/.ssh/authorized_keys /archroot/root/.ssh/authorized_keys
+	if [ -e /root/.ssh/authorized_keys ]; then
+		mkdir -p /archroot/root/.ssh/
+		chmod 700 /archroot/root/.ssh/
+		cp -p /root/.ssh/authorized_keys /archroot/root/.ssh/authorized_keys
+	fi
 
 	# setup machine id
 	chroot /archroot systemd-machine-id-setup

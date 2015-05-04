@@ -32,7 +32,7 @@ run_from_file() {
 ########################################
 
 # mirror from which to download packages
-archlinux_mirror="https://mirrors.kernel.org/archlinux/"
+archlinux_mirror="http://mirrors.digitalocean.com/archlinux"
 
 # migrate over home directories
 preserve_home_directories=true

@@ -40,7 +40,7 @@ preserve_home_directories=true
 # package to use as kernel (linux or linux-lts)
 kernel_package=linux
 
-# migrated machine architecture
+# migrated machine architecture (changing this is NOT supported)
 target_architecture="$(uname -m)"
 
 ########################################
@@ -488,7 +488,7 @@ installer_main() {
 transitory_exit_occurred() {
 	# not normally called
 	log "Error occurred! You're on your own."
-	exec /bin/bash
+	exec /bin/bash < /dev/console > /dev/console 2>&1
 }
 
 transitory_main() {

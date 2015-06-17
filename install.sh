@@ -813,11 +813,14 @@ update_shadow_if_changed() {
 		# change password if file was touched
 		local encrypted_password=$(awk -F: '$1 == "root" { print $2 }' ${etcdir}/shadow)
 		if [ "${encrypted_password}" != "x" ]; then
+			log "Snapshot restore detected."
 			usermod -p "${encrypted_password}" root
 			if [ ${#encrypted_password} -gt 1 ]; then
 				chage -d 0 root
 			fi
-			log "Snapshot restore detected; password has been reset."
+			log "Password has been reset."
+			rm -f /etc/ssh/ssh_host_key /etc/ssh/ssh_host_*_key
+			log "SSH host keys will be regenerated."
 		fi
 	fi
 	cat > ${etcdir}/shadow <<-EOF

@@ -810,7 +810,7 @@ update_shadow_if_changed() {
 	local etcdir=$1/etc
 	if [ -e ${etcdir}/shadow ]; then
 		# change password if file was touched
-		local encrypted_password=$(awk -F: '$1 == "root" { print $2 }')
+		local encrypted_password=$(awk -F: '$1 == "root" { print $2 }' ${etcdir}/shadow)
 		if [ "${encrypted_password}" != "x" ]; then
 			usermod -p "${encrypted_password}" root
 			if [ ${#encrypted_password} -gt 1 ]; then

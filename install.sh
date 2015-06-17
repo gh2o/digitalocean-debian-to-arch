@@ -788,13 +788,8 @@ shopt -s dotglob
 umask 022
 
 log() {
-	echo "[$(date)]" "$@" >&2
-}
-
-fatal() {
-	log "$@"
-	log "Exiting."
-	exit 1
+	logger -t digitalocean-synchronize "$@" || \
+		echo "[$(date)]" "$@" >&2
 }
 
 netmask_to_prefix() {
@@ -821,6 +816,7 @@ update_shadow_if_changed() {
 			if [ ${#encrypted_password} -gt 1 ]; then
 				chage -d 0 root
 			fi
+			log "Snapshot restore detected; password has been reset."
 		fi
 	fi
 	cat > ${etcdir}/shadow <<-EOF
@@ -854,18 +850,22 @@ process_interface() {
 			[Network]
 		EOF
 		if [[ " ${attrs} " =~ " ipv4/ " ]]; then
+			local address=$(curl -sf ${url}ipv4/address)
 			local prefix=$(netmask_to_prefix $(curl -sf ${url}ipv4/netmask))
-			echo "Address=$(curl -sf ${url}ipv4/address)/${prefix}"
+			echo "Address=${address}/${prefix}"
 			if [ "${type}" != "private" ]; then
 				echo "Gateway=$(curl -sf ${url}ipv4/gateway)"
 			fi
+			log "Added IPv4 address ${address}/${prefix} on ${interface}."
 		fi
 		if [[ " ${attrs} " =~ " ipv6/ " ]]; then
+			local address=$(curl -sf ${url}ipv6/address)
 			local prefix=$(curl -sf ${url}ipv6/cidr)
-			echo "Address=$(curl -sf ${url}ipv6/address)/${prefix}"
+			echo "Address=${address}/${prefix}"
 			if [ "${type}" != "private" ]; then
 				echo "Gateway=$(curl -sf ${url}ipv6/gateway)"
 			fi
+			log "Added IPv6 address ${address}/${prefix} on ${interface}."
 		fi
 	} > /run/systemd/network/dosync-${interface}.network
 }
@@ -890,13 +890,16 @@ setup_from_metadata_service() {
 	if sshkeys=$(curl -Ssf ${meta_base}public-keys) && test -n "${sshkeys}"; then
 		[ -d /root/.ssh ] || mkdir -m 0700 /root/.ssh
 		[ -e /root/.ssh/authorized_keys ] || touch /root/.ssh/authorized_keys
-		grep -q "${sshkeys}" /root/.ssh/authorized_keys || \
+		if ! grep -q "${sshkeys}" /root/.ssh/authorized_keys; then
 			printf '\n%s\n' "${sshkeys}" >> /root/.ssh/authorized_keys
+			log "Added SSH public keys from metadata service."
+		fi
 	fi
 	local hostname
 	if ! test -e /etc/hostname && hostname=$(curl -Ssf ${meta_base}hostname); then
 		echo "${hostname}" > /etc/hostname
 		hostname "${hostname}"
+		log "Hostname set to ${hostname} from metadata service."
 	fi
 	traverse_interfaces ${meta_base}interfaces/
 }
@@ -906,12 +909,16 @@ digitalocean_synchronize() {
 		mount /dev/disk/by-label/DOROOT /mnt/doroot
 		update_shadow_if_changed /mnt/doroot
 		umount /mnt/doroot
+	else
+		log "Unable to check DOROOT for snapshot check!"
 	fi
 
 	ip link set dev eth0 up
 	ip addr add dev eth0 169.254.169.252/30 2>/dev/null || true
 	if curl -Ssf -m 1 ${meta_base} >/dev/null; then
 		setup_from_metadata_service
+	else
+		log "Unable to connect to metadata service!"
 	fi
 }
 
@@ -932,7 +939,7 @@ ExecStart=/usr/sbin/digitalocean-synchronize
 
 !!!!digitalocean-synchronize.PKGINFO
 pkgname = digitalocean-synchronize
-pkgver = 2.1-1
+pkgver = 2.2-1
 pkgdesc = DigitalOcean Synchronization (passwords, keys, networks)
 url = https://github.com/gh2o/digitalocean-debian-to-arch
 arch = any

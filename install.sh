@@ -375,6 +375,7 @@ stage1_install() {
 		${arch_packages[@]}
 
 	log "Configuring base system ..."
+	hostname > /d2a/work/archroot/etc/hostname
 	cp /etc/ssh/ssh_host_* /d2a/work/archroot/etc/ssh/
 	local encrypted_password=$(awk -F: '$1 == "root" { print $2 }' /etc/shadow)
 	chroot /d2a/work/archroot usermod -p "${encrypted_password}" root
@@ -814,23 +815,17 @@ update_shadow_if_changed() {
 	local etcdir=$1/etc
 	if [ -e ${etcdir}/shadow ]; then
 		# change password if file was touched
-		local shadow_line=$(awk -F: '$1 == "root" {print; exit}' ${etcdir}/shadow)
-		local shadow_array
-		IFS=':' read -a shadow_array <<< "${shadow_line}"
-		if [ ${#shadow_array[@]} -ge 3 ]; then
-			local encrypted_password=${shadow_array[1]}
-			local last_changed=${shadow_array[2]}
-			if [ "${last_changed}" != "1" ]; then
-				usermod -p "${encrypted_password}" root
-				if [ ${#encrypted_password} -gt 1 ]; then
-					chage -d 0 root
-				fi
+		local encrypted_password=$(awk -F: '$1 == "root" { print $2 }')
+		if [ "${encrypted_password}" != "x" ]; then
+			usermod -p "${encrypted_password}" root
+			if [ ${#encrypted_password} -gt 1 ]; then
+				chage -d 0 root
 			fi
 		fi
 	fi
 	cat > ${etcdir}/shadow <<-EOF
-		root:*:1::::::
-		nobody:*:1::::::
+		root:x:1::::::
+		nobody:x:1::::::
 	EOF
 	chmod 0600 ${etcdir}/shadow
 }
@@ -937,7 +932,7 @@ ExecStart=/usr/sbin/digitalocean-synchronize
 
 !!!!digitalocean-synchronize.PKGINFO
 pkgname = digitalocean-synchronize
-pkgver = 2.0-1
+pkgver = 2.1-1
 pkgdesc = DigitalOcean Synchronization (passwords, keys, networks)
 url = https://github.com/gh2o/digitalocean-debian-to-arch
 arch = any

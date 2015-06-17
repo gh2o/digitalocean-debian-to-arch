@@ -334,9 +334,6 @@ stage1_install() {
 	log "Setting up DOROOT ..."
 	mkdir -p /d2a/work/doroot/etc/network
 	touch /d2a/work/doroot/etc/network/interfaces
-	awk -F: '$1 == "root" || $1 == "nobody"' /etc/shadow \
-		> /d2a/work/doroot/etc/shadow
-	chmod 0600 /d2a/work/doroot/etc/shadow
 
 	log "Downloading bootstrap tarball ..."
 	set -- $(wget -qO- ${archlinux_mirror}/iso/latest/sha1sums.txt |
@@ -378,7 +375,9 @@ stage1_install() {
 		${arch_packages[@]}
 
 	log "Configuring base system ..."
-	cp /etc/ssh/ssh_host_* /d2a/work/archroot/etc/ssh
+	cp /etc/ssh/ssh_host_* /d2a/work/archroot/etc/ssh/
+	local encrypted_password=$(awk -F: '$1 == "root" { print $2 }' /etc/shadow)
+	chroot /d2a/work/archroot usermod -p "${encrypted_password}" root
 	chroot /d2a/work/archroot systemctl enable systemd-networkd.service
 	chroot /d2a/work/archroot systemctl enable sshd.service
 	package_digitalocean_synchronize /d2a/work/archroot/dosync.pkg.tar
@@ -813,14 +812,27 @@ netmask_to_prefix() {
 
 update_shadow_if_changed() {
 	local etcdir=$1/etc
-	cmp ${etcdir}/shadow ${etcdir}/shadow.synced && return 0
-	# change password
-	local password=$(awk -F: '$1 == "root" { print $2 }' ${etcdir}/shadow)
-	usermod -p "${password}" root
-	[ ${#password} -gt 1 ] && chage -d 0 root
-	# sync password synced file
-	rm -f ${etcdir}/shadow.synced
-	cp ${etcdir}/shadow ${etcdir}/shadow.synced
+	if [ -e ${etcdir}/shadow ]; then
+		# change password if file was touched
+		local shadow_line=$(awk -F: '$1 == "root" {print; exit}' ${etcdir}/shadow)
+		local shadow_array
+		IFS=':' read -a shadow_array <<< "${shadow_line}"
+		if [ ${#shadow_array[@]} -ge 3 ]; then
+			local encrypted_password=${shadow_array[1]}
+			local last_changed=${shadow_array[2]}
+			if [ "${last_changed}" != "1" ]; then
+				usermod -p "${encrypted_password}" root
+				if [ ${#encrypted_password} -gt 1 ]; then
+					chage -d 0 root
+				fi
+			fi
+		fi
+	fi
+	cat > ${etcdir}/shadow <<-EOF
+		root:*:1::::::
+		nobody:*:1::::::
+	EOF
+	chmod 0600 ${etcdir}/shadow
 }
 
 process_interface() {

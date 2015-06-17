@@ -960,11 +960,17 @@ digitalocean_synchronize() {
 
 	ip link set dev eth0 up
 	ip addr add dev eth0 169.254.169.252/30 2>/dev/null || true
-	if curl -Ssf -m 1 ${meta_base} >/dev/null; then
-		setup_from_metadata_service
-	else
-		log "Unable to connect to metadata service!"
-	fi
+	local retry
+	for retry in {1..20}; do
+		log "Attempting to connect to metadata service ..."
+		if curl -Ssf -m 1 ${meta_base} >/dev/null; then
+			setup_from_metadata_service
+			break
+		else
+			log "Unable to connect to metadata service!"
+			sleep 1
+		fi
+	done
 	ip addr del dev eth0 169.254.169.252/30 2>/dev/null || true
 }
 
@@ -985,7 +991,7 @@ ExecStart=/usr/sbin/digitalocean-synchronize
 
 !!!!digitalocean-synchronize.PKGINFO
 pkgname = digitalocean-synchronize
-pkgver = 2.3-1
+pkgver = 2.4-1
 pkgdesc = DigitalOcean Synchronization (passwords, keys, networks)
 url = https://github.com/gh2o/digitalocean-debian-to-arch
 arch = any

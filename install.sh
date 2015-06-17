@@ -808,6 +808,7 @@ netmask_to_prefix() {
 
 update_shadow_if_changed() {
 	local etcdir=$1/etc
+	mkdir -p ${etcdir} || return 0
 	if [ -e ${etcdir}/shadow ]; then
 		# change password if file was touched
 		local encrypted_password=$(awk -F: '$1 == "root" { print $2 }' ${etcdir}/shadow)

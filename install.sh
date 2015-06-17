@@ -921,6 +921,7 @@ digitalocean_synchronize() {
 	else
 		log "Unable to connect to metadata service!"
 	fi
+	ip addr del dev eth0 169.254.169.252/30 2>/dev/null || true
 }
 
 digitalocean_synchronize

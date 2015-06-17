@@ -297,6 +297,7 @@ package_digitalocean_synchronize() {
 	chmod 0755 ${pkgroot}/usr/bin/digitalocean-synchronize
 
 	( cd ${pkgroot} && tar -cf ${destination} * )
+	rm -rf ${pkgroot}
 }
 
 kill_processes_in_mountpoint() {
@@ -359,6 +360,20 @@ stage1_install() {
 	log "Setting up DOROOT ..."
 	mkdir -p /d2a/work/doroot/etc/network
 	touch /d2a/work/doroot/etc/network/interfaces
+	cat > /d2a/work/doroot/README <<-EOF
+		DO NOT TOUCH FILES ON THIS PARTITION.
+
+		The DOROOT partition is where DigitalOcean writes passwords and other data
+		when a droplet is rebuilt from an image or restored from a snapshot.
+		If certain files are missing, restores/rebuilds will not work and you will
+		end up with an unusable image.
+
+		The digitalocean-synchronize script also watches this partition.
+		If this partition (particularly etc/shadow) is written to, the script will
+		reset the root password to the one provided by DigitalOcean and wipe all
+		SSH host keys for security.
+	EOF
+	chmod 0444 /d2a/work/doroot/README
 
 	log "Downloading bootstrap tarball ..."
 	set -- $(wget -qO- ${archlinux_mirror}/iso/latest/sha1sums.txt |

@@ -21,7 +21,8 @@ Installation
 
         wget https://raw.githubusercontent.com/gh2o/digitalocean-debian-to-arch/debian8/install.sh && bash install.sh
 
-3. Sit back and relax! The system will automatically reboot once complete,
+3. Follow the instructions when prompted.
+4. Sit back and relax! The system will automatically reboot once complete,
    and you should have a fully updated Arch Linux system in within minutes.
 
 Advanced Configuration

@@ -46,6 +46,9 @@ target_disklabel="gpt"
 # new filesystem type (ext4/btrfs)
 target_filesystem="ext4"
 
+# NOT EXPOSED NORMALLY: don't prompt
+continue_without_prompting=0
+
 ########################################
 ### END OF CONFIGURATION             ###
 ########################################
@@ -129,11 +132,18 @@ parse_flags() {
 					shift
 					break
 					;;
+				--i_understand_that_this_droplet_will_be_completely_wiped)
+					continue_without_prompting=1
+					conf_key=option_acknowledged
+					shift
+					break
+					;;
 				--help)
 					print_help_and_exit
 					;;
 			esac
 		done
+		[ "${conf_key}" = option_acknowledged ] && continue
 		[ -n "${conf_key}" ] || fatal "Unknown option: $1"
 		[ -n "${conf_val}" ] || fatal "Empty value for option ${conf_key}."
 		local -n conf_ref=${conf_key}
@@ -204,6 +214,21 @@ sanity_checks() {
 	[ -e /dev/vda ] || fatal "Script must be run on a KVM machine."
 	[[ "$(cat /etc/debian_version)" == 8.? ]] || \
 		fatal "This script only supports Debian 8.x."
+}
+
+prompt_for_destruction() {
+	(( continue_without_prompting )) && return 0
+	log "*** ALL DATA ON THIS DROPLET WILL BE WIPED. ***"
+	log "Please backup all important data on this droplet before continuing."
+	log 'Type "wipe this droplet" to continue or anything else to cancel.'
+	local response
+	read -p ' > ' response
+	if [ "${response}" = "wipe this droplet" ]; then
+		return 0
+	else
+		log "Cancelled."
+		exit 0
+	fi
 }
 
 download_and_verify() {
@@ -764,6 +789,7 @@ if [ $$ -ne 1 ]; then
 	parse_flags "$@"
 	sanity_checks
 	validate_flags_and_augment_globals
+	prompt_for_destruction
 	stage1_install
 	stage2_arrange
 	stage3_prepare

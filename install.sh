@@ -812,7 +812,7 @@ update_shadow_if_changed() {
 	if [ -e ${etcdir}/shadow ]; then
 		# change password if file was touched
 		local encrypted_password=$(awk -F: '$1 == "root" { print $2 }' ${etcdir}/shadow)
-		if [ "${encrypted_password}" != "x" ]; then
+		if [ "${encrypted_password}" != "z" ]; then
 			log "Snapshot restore detected."
 			usermod -p "${encrypted_password}" root
 			if [ ${#encrypted_password} -gt 1 ]; then
@@ -824,8 +824,8 @@ update_shadow_if_changed() {
 		fi
 	fi
 	cat > ${etcdir}/shadow <<-EOF
-		root:x:1::::::
-		nobody:x:1::::::
+		root:z:1::::::
+		nobody:z:1::::::
 	EOF
 	chmod 0600 ${etcdir}/shadow
 }
@@ -944,7 +944,7 @@ ExecStart=/usr/sbin/digitalocean-synchronize
 
 !!!!digitalocean-synchronize.PKGINFO
 pkgname = digitalocean-synchronize
-pkgver = 2.2-1
+pkgver = 2.3-1
 pkgdesc = DigitalOcean Synchronization (passwords, keys, networks)
 url = https://github.com/gh2o/digitalocean-debian-to-arch
 arch = any

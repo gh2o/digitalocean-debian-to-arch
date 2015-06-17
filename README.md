@@ -18,7 +18,7 @@ Installation
 1. Create a new Debian 7.0 droplet (either 32-bit or 64-bit works).
 2. In the droplet (either SSH or console access works),
    run the following as root:
-    ```wget https://raw.githubusercontent.com/gh2o/digitalocean-debian-to-arch/master/install.sh && bash install.sh```
+    ```wget https://raw.githubusercontent.com/gh2o/digitalocean-debian-to-arch/debian7/install.sh && bash install.sh```
 3. Answer the questions as prompted.
     * If the script asks to remove a failed installation,
       there is a failed installation at `/archroot` that is

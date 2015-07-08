@@ -1,0 +1,12 @@
+[Unit]
+Description=DigitalOcean Synchronization
+DefaultDependencies=no
+Before=systemd-networkd.service
+After=systemd-udevd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/digitalocean-synchronize
+
+[Install]
+WantedBy=multi-user.target

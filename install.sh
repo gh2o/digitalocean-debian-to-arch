@@ -912,6 +912,11 @@ process_interface() {
 			fi
 			log "Added IPv6 address ${address}/${prefix} on ${interface}."
 		fi
+		local network_tail=/etc/systemd/network/template/dosync-${interface}.network.tail
+		if [[ -r "${network_tail}" ]]; then
+			cat ${network_tail}
+			log "Appended user specified config for ${interface}."
+		fi
 	} > /run/systemd/network/dosync-${interface}.network
 }
 

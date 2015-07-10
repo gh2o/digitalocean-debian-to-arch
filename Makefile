@@ -4,6 +4,13 @@ PKGREL  = $(shell grep ^pkgrel PKGBUILD | sed -e 's:.*=::')
 PKGARCH = $(shell grep ^arch PKGBUILD | sed -e 's:.*=::')
 
 PKG     = $(PKGNAME)-$(PKGVER)-$(PKGREL)-$(PKGARCH).pkg.tar.xz
+PKG_SRC = $(PKGNAME)-$(PKGVER)-$(PKGREL).src.tar.gz
+
+DEPS    = digitalocean-synchronize \
+		  digitalocean-synchronize.service \
+		  digitalocean-synchronize.install \
+		  PKGBUILD \
+		  Makefile
 
 install.pkg.sh: $(PKG)
 	@cat $(subst .pkg,,$@) > $@
@@ -14,13 +21,9 @@ install.pkg.sh: $(PKG)
 	$(info Build complete!)
 	$(info Output file: $@)
 
-$(PKG): digitalocean-synchronize \
-		digitalocean-synchronize.service \
-		digitalocean-synchronize.install \
-		PKGBUILD \
-		Makefile
-
+$(PKG): $(DEPS)
 	updpkgsums
+	mksrcinfo
 	makepkg -fc
 
 clean:

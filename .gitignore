@@ -2,3 +2,4 @@
 .*.swp
 *pkg.tar*
 /install.pkg.sh
+*.src.tar.gz

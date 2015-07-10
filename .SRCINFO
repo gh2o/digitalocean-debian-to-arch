@@ -1,0 +1,15 @@
+pkgbase = digitalocean-synchronize
+	pkgdesc = DigitalOcean Synchronization (passwords, keys, networks)
+	pkgver = 2.4
+	pkgrel = 2
+	url = https://github.com/gh2o/digitalocean-debian-to-arch
+	install = digitalocean-synchronize.install
+	arch = any
+	license = GPL
+	source = digitalocean-synchronize
+	source = digitalocean-synchronize.service
+	sha256sums = 2115bcf34d80186103e4399f5a20d410145ee50d316a67bdfe6f43c4b11d2064
+	sha256sums = 5888d367a08604b17528d58aa26050209d8ececf7ed35f90b5e96b31165b6a1c
+
+pkgname = digitalocean-synchronize
+

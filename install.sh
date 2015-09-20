@@ -284,6 +284,7 @@ package_digitalocean_synchronize() {
 	local destination=$1
 	local pkgroot=/d2a/work/dosync
 	local sysdir=${pkgroot}/usr/lib/systemd/system
+	local netdir=${pkgroot}/usr/lib/systemd/network
 
 	mkdir -p ${pkgroot}
 	extract_embedded_file digitalocean-synchronize.PKGINFO > ${pkgroot}/.PKGINFO
@@ -293,6 +294,8 @@ package_digitalocean_synchronize() {
 	extract_embedded_file digitalocean-synchronize.service > ${sysdir}/digitalocean-synchronize.service
 	mkdir -p ${sysdir}/multi-user.target.wants
 	ln -s ../digitalocean-synchronize.service ${sysdir}/multi-user.target.wants
+	mkdir -p ${netdir}
+	extract_embedded_file 90-virtio-no-rename.link > ${netdir}/90-virtio-no-rename.link
 
 	chmod 0755 ${pkgroot}/usr/bin/digitalocean-synchronize
 
@@ -996,11 +999,19 @@ ExecStart=/usr/sbin/digitalocean-synchronize
 
 !!!!digitalocean-synchronize.PKGINFO
 pkgname = digitalocean-synchronize
-pkgver = 2.4-1
+pkgver = 2.4-2
 pkgdesc = DigitalOcean Synchronization (passwords, keys, networks)
 url = https://github.com/gh2o/digitalocean-debian-to-arch
 arch = any
 license = GPL
+!!!!
+
+!!!!90-virtio-no-rename.link
+# Prevent virtio network devices from being renamed.
+[Match]
+Driver=virtio_net
+[Link]
+NamePolicy=kernel
 !!!!
 
 EMBEDDED

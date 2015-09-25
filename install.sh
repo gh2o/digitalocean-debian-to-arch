@@ -49,6 +49,9 @@ target_filesystem="ext4"
 # NOT EXPOSED NORMALLY: don't prompt
 continue_without_prompting=0
 
+# NOT EXPOSED NORMALLY: path to metadata service
+meta_base=http://169.254.169.254/metadata/v1/
+
 ########################################
 ### END OF CONFIGURATION             ###
 ########################################
@@ -427,6 +430,23 @@ stage1_install() {
 	package_digitalocean_synchronize /d2a/work/archroot/dosync.pkg.tar
 	${chroot_pacman} -U --noconfirm /dosync.pkg.tar
 	rm /d2a/work/archroot/dosync.pkg.tar
+
+	local authkeys
+	if authkeys="$(wget -qO- ${meta_base}public-keys)" && test -z "${authkeys}"; then
+		log "*** WARNING ***"
+		log "SSH public keys are not configured for this droplet."
+		log "PermitRootLogin will be enabled in sshd_config to permit root logins over SSH."
+		log "This is a security risk, as passwords are not as secure as public keys."
+		log "To set up public keys, visit the following URL: https://goo.gl/iEgFRs"
+		log "Remember to remove the PermitRootLogin option from sshd_config after doing so."
+		cat >> /d2a/work/archroot/etc/ssh/sshd_config <<-EOF
+
+			# This enables password logins to root over SSH.
+			# This is insecure; see https://goo.gl/iEgFRs to set up public keys.
+			PermitRootLogin yes
+
+		EOF
+	fi
 
 	log "Finishing up image generation ..."
 	ln -f /d2a/work/image /d2a/image

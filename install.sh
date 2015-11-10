@@ -32,7 +32,7 @@ run_from_file() {
 ########################################
 
 # mirror from which to download archlinux packages
-archlinux_mirror="http://mirror.rackspace.com/archlinux"
+archlinux_mirror="http://mirrors.kernel.org/archlinux"
 
 # package to use as kernel (linux or linux-lts)
 kernel_package=linux

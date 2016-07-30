@@ -926,6 +926,12 @@ process_interface() {
 			fi
 			log "Added IPv4 address ${address}/${prefix} on ${interface}."
 		fi
+		if [[ " ${attrs} " =~ " anchor_ipv4/ " ]]; then
+			local address=$(curl -sf ${url}anchor_ipv4/address)
+			local prefix=$(netmask_to_prefix $(curl -sf ${url}anchor_ipv4/netmask))
+			echo "Address=${address}/${prefix}"
+			log "Added Anchor IPv4 address ${address}/${prefix} on ${interface}."
+		fi
 		if [[ " ${attrs} " =~ " ipv6/ " ]]; then
 			local address=$(curl -sf ${url}ipv6/address)
 			local prefix=$(curl -sf ${url}ipv6/cidr)
@@ -1019,7 +1025,7 @@ ExecStart=/usr/sbin/digitalocean-synchronize
 
 !!!!digitalocean-synchronize.PKGINFO
 pkgname = digitalocean-synchronize
-pkgver = 2.4-2
+pkgver = 2.5-1
 pkgdesc = DigitalOcean Synchronization (passwords, keys, networks)
 url = https://github.com/gh2o/digitalocean-debian-to-arch
 arch = any

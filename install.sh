@@ -421,7 +421,7 @@ stage1_install() {
 	local chroot_pacman="chroot /d2a/work/archroot pacman --arch ${target_architecture}"
 	${chroot_pacman} -Sy
 	${chroot_pacman} -Su --noconfirm --needed \
-		$(${chroot_pacman} -Sgq base $(developer_package) | grep -v '^linux$') \
+		$(${chroot_pacman} -Sgq base ${developer_package} | grep -v '^linux$') \
 		${arch_packages[@]}
 
 	log "Configuring base system ..."

@@ -30,6 +30,9 @@ This script supports several flags, all of which are optional.
 * `--archlinux_mirror`  
   The Arch Linux mirror from which the bootstrap image and packages should be
   downloaded. Defaults to http://mirrors.kernel.org/archlinux
+* `--developer_package`
+  The developer package allows the user to include the archlinux development package.
+  Automatically default to none. The alternative is `base-devel`.
 * `--kernel_package`  
   The kernel package to install. Defaults to the vanilla `linux` package.
   Other options include `linux-lts` for long term support and `linux-grsec` for

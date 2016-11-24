@@ -34,6 +34,9 @@ run_from_file() {
 # mirror from which to download archlinux packages
 archlinux_mirror="http://mirrors.kernel.org/archlinux"
 
+# install archlinux developers package
+developer_package=""
+
 # package to use as kernel (linux or linux-lts)
 kernel_package=linux
 
@@ -74,6 +77,7 @@ sector_size=512
 
 flag_variables=(
 	archlinux_mirror
+	developer_package
 	kernel_package
 	target_architecture
 	target_disklabel
@@ -417,7 +421,7 @@ stage1_install() {
 	local chroot_pacman="chroot /d2a/work/archroot pacman --arch ${target_architecture}"
 	${chroot_pacman} -Sy
 	${chroot_pacman} -Su --noconfirm --needed \
-		$(${chroot_pacman} -Sgq base | grep -v '^linux$') \
+		$(${chroot_pacman} -Sgq base ${developer_package} | grep -v '^linux$') \
 		${arch_packages[@]}
 
 	log "Configuring base system ..."

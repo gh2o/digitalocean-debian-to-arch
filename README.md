@@ -61,7 +61,7 @@ How it Works
    * **ArchRoot**: The main root filesystem for Arch Linux.
 3. The Arch Linux bootstrap image is downloaded and unpacked onto ArchRoot.
 4. `pacman -Syu` is called inside the image to pull in all the base packages
-   along with OpenSSH.
+   along with OpenSSH and any other packages put in the --extra_packages option.
 5. The root password and SSH host keys are copied into the image.
 6. A special script called `digitalocean-synchronize` is installed into
    the image. This script is run at every startup to autodetect the network

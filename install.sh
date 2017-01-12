@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-### INSTRUCTIONS AT https://github.com/gh2o/digitalocean-debian-to-arch/     ###
+### INSTRUCTIONS AT https://github.com/Moshifan100/digitalocean-debian-to-arch/     ###
 ################################################################################
 
 run_from_file() {
@@ -33,6 +33,12 @@ run_from_file() {
 
 # mirror from which to download archlinux packages
 archlinux_mirror="http://mirrors.kernel.org/archlinux"
+
+# install any other packages during pacstrap
+pacstrap_extra=""
+
+# extra packages
+extra_packages=""
 
 # package to use as kernel (linux or linux-lts)
 kernel_package=linux
@@ -74,7 +80,8 @@ sector_size=512
 
 flag_variables=(
 	archlinux_mirror
-	kernel_package
+	pacstrap_extra
+	extra_packages
 	target_architecture
 	target_disklabel
 	target_filesystem
@@ -88,7 +95,9 @@ host_packages=(
 arch_packages=(
 	grub
 	openssh
+	wget
 )
+
 
 gpt1_size_MiB=1
 doroot_size_MiB=6
@@ -417,8 +426,8 @@ stage1_install() {
 	local chroot_pacman="chroot /d2a/work/archroot pacman --arch ${target_architecture}"
 	${chroot_pacman} -Sy
 	${chroot_pacman} -Su --noconfirm --needed \
-		$(${chroot_pacman} -Sgq base | grep -v '^linux$') \
-		${arch_packages[@]}
+		$(${chroot_pacman} -Sgq base ${pacstrap_extra} | grep -v '^linux$') \
+		${arch_packages[@]} ${extra_packages}
 
 	log "Configuring base system ..."
 	hostname > /d2a/work/archroot/etc/hostname

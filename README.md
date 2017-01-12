@@ -30,6 +30,11 @@ This script supports several flags, all of which are optional.
 * `--archlinux_mirror`  
   The Arch Linux mirror from which the bootstrap image and packages should be
   downloaded. Defaults to http://mirrors.kernel.org/archlinux
+* `--extra_packages`
+  Installs any extra packages to the Arch installation. To add multiple packages use quotation   
+  marks example `--extra_packages "git wget"`
+* `--pacstrap-extra`
+  Installs any extra packages during pacstrap like `base-devel`. 
 * `--kernel_package`  
   The kernel package to install. Defaults to the vanilla `linux` package.
   Other options include `linux-lts` for long term support and `linux-grsec` for

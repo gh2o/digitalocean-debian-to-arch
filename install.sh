@@ -78,6 +78,7 @@ sector_size=512
 flag_variables=(
 	archlinux_mirror
 	extra_packages
+	kernel_package
 	target_architecture
 	target_disklabel
 	target_filesystem

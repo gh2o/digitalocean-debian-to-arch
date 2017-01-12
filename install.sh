@@ -34,9 +34,6 @@ run_from_file() {
 # mirror from which to download archlinux packages
 archlinux_mirror="http://mirrors.kernel.org/archlinux"
 
-# install any other packages during pacstrap
-pacstrap_extra=""
-
 # extra packages
 extra_packages=""
 
@@ -80,7 +77,6 @@ sector_size=512
 
 flag_variables=(
 	archlinux_mirror
-	pacstrap_extra
 	extra_packages
 	target_architecture
 	target_disklabel
@@ -426,7 +422,7 @@ stage1_install() {
 	local chroot_pacman="chroot /d2a/work/archroot pacman --arch ${target_architecture}"
 	${chroot_pacman} -Sy
 	${chroot_pacman} -Su --noconfirm --needed \
-		$(${chroot_pacman} -Sgq base ${pacstrap_extra} | grep -v '^linux$') \
+		$(${chroot_pacman} -Sgq base | grep -v '^linux$') \
 		${arch_packages[@]} ${extra_packages}
 
 	log "Configuring base system ..."

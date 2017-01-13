@@ -30,6 +30,10 @@ This script supports several flags, all of which are optional.
 * `--archlinux_mirror`  
   The Arch Linux mirror from which the bootstrap image and packages should be
   downloaded. Defaults to http://mirrors.kernel.org/archlinux
+* `--extra_packages`
+  Installs any extra packages to the Arch installation (e.g. base-devel).
+  Packages should be space-separated and quoted
+  (e.g. `--extra_packages "git wget"`).
 * `--kernel_package`  
   The kernel package to install. Defaults to the vanilla `linux` package.
   Other options include `linux-lts` for long term support and `linux-grsec` for
@@ -57,7 +61,7 @@ How it Works
    * **ArchRoot**: The main root filesystem for Arch Linux.
 3. The Arch Linux bootstrap image is downloaded and unpacked onto ArchRoot.
 4. `pacman -Syu` is called inside the image to pull in all the base packages
-   along with OpenSSH.
+   along with OpenSSH and any other packages put in the --extra_packages option.
 5. The root password and SSH host keys are copied into the image.
 6. A special script called `digitalocean-synchronize` is installed into
    the image. This script is run at every startup to autodetect the network

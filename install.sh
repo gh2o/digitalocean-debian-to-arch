@@ -34,6 +34,9 @@ run_from_file() {
 # mirror from which to download archlinux packages
 archlinux_mirror="http://mirrors.kernel.org/archlinux"
 
+# extra packages
+extra_packages=""
+
 # package to use as kernel (linux or linux-lts)
 kernel_package=linux
 
@@ -74,6 +77,7 @@ sector_size=512
 
 flag_variables=(
 	archlinux_mirror
+	extra_packages
 	kernel_package
 	target_architecture
 	target_disklabel
@@ -88,6 +92,7 @@ host_packages=(
 arch_packages=(
 	grub
 	openssh
+	wget
 )
 
 gpt1_size_MiB=1
@@ -418,7 +423,7 @@ stage1_install() {
 	${chroot_pacman} -Sy
 	${chroot_pacman} -Su --noconfirm --needed \
 		$(${chroot_pacman} -Sgq base | grep -v '^linux$') \
-		${arch_packages[@]}
+		${arch_packages[@]} ${extra_packages}
 
 	log "Configuring base system ..."
 	hostname > /d2a/work/archroot/etc/hostname

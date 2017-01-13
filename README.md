@@ -18,7 +18,7 @@ Installation
 ------------
 1. Create a new Debian 8.x droplet (either 32-bit or 64-bit is fine).
 2. In the droplet, run the following as root:
-        `wget https://raw.githubusercontent.com/Moshifan100/digitalocean-debian-to-arch/debian8/install.sh && bash install.sh`
+        `wget https://raw.githubusercontent.com/gh2o/digitalocean-debian-to-arch/debian8/install.sh && bash install.sh`
 3. Follow the instructions when prompted.
 4. Sit back and relax! The system will automatically reboot once complete,
    and you should have a fully updated Arch Linux system in within minutes.
@@ -31,9 +31,9 @@ This script supports several flags, all of which are optional.
   The Arch Linux mirror from which the bootstrap image and packages should be
   downloaded. Defaults to http://mirrors.kernel.org/archlinux
 * `--extra_packages`
-  Installs any extra packages to the Arch installation. This works with `base-devel` as well. To   
-  add multiple packages use quotation   
-  marks example `--extra_packages "git wget"`
+  Installs any extra packages to the Arch installation (e.g. base-devel).
+  Packages should be space-separated and quoted
+  (e.g. `--extra_packages "git wget"`).
 * `--kernel_package`  
   The kernel package to install. Defaults to the vanilla `linux` package.
   Other options include `linux-lts` for long term support and `linux-grsec` for

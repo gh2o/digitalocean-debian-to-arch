@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-### INSTRUCTIONS AT https://github.com/Moshifan100/digitalocean-debian-to-arch/     ###
+### INSTRUCTIONS AT https://github.com/gh2o/digitalocean-debian-to-arch/     ###
 ################################################################################
 
 run_from_file() {
@@ -94,7 +94,6 @@ arch_packages=(
 	openssh
 	wget
 )
-
 
 gpt1_size_MiB=1
 doroot_size_MiB=6

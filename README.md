@@ -39,8 +39,8 @@ This script supports several flags, all of which are optional.
   (e.g. `--extra_packages "git wget"`).
 * `--kernel_package`  
   The kernel package to install. Defaults to the vanilla `linux` package.
-  Other options include `linux-lts` for long term support and `linux-grsec` for
-  a kernel with grsecurity/PaX patches.
+  Other options include `linux-lts` for long term support and `linux-hardened` for
+  a kernel with patches from [linux-hardened](https://github.com/thestinger/linux-hardened).
 * `--target_architecture`  
   The architecture of the new Arch Linux installation. Defaults to the
   architecture of the original Debian image as provided by `uname -m`.

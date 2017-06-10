@@ -370,6 +370,7 @@ stage1_install() {
 
 	log "Setting up DOROOT ..."
 	mkdir -p /d2a/work/doroot/etc/network
+	mkdir -p /d2a/work/doroot/etc/udev/{rules,hwdb}.d
 	touch /d2a/work/doroot/etc/network/interfaces
 	cat > /d2a/work/doroot/README <<-EOF
 		DO NOT TOUCH FILES ON THIS PARTITION.

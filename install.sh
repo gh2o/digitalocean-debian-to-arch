@@ -49,6 +49,9 @@ target_disklabel="gpt"
 # new filesystem type (ext4/btrfs)
 target_filesystem="ext4"
 
+# extra mkfs options
+mkfs_options=""
+
 # NOT EXPOSED NORMALLY: don't prompt
 continue_without_prompting=0
 
@@ -82,6 +85,7 @@ flag_variables=(
 	target_architecture
 	target_disklabel
 	target_filesystem
+	mkfs_options
 )
 
 host_packages=(
@@ -361,7 +365,7 @@ stage1_install() {
 	local doroot_loop=$(setup_loop_device ${doroot_offset_MiB} ${doroot_size_MiB})
 	local archroot_loop=$(setup_loop_device ${archroot_offset_MiB} ${archroot_size_MiB})
 	mkfs.ext4 -L DOROOT ${doroot_loop}
-	mkfs.${target_filesystem} -L ArchRoot ${archroot_loop}
+	mkfs.${target_filesystem} -L ArchRoot ${mkfs_options} ${archroot_loop}
 
 	log "Mounting image ..."
 	mkdir -p /d2a/work/{doroot,archroot}

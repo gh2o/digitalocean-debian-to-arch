@@ -450,6 +450,7 @@ stage1_install() {
 }
 
 bisect_left_on_allocation() {
+	# more or less copied from Python's bisect.py
 	local alloc_start_sector=$1
 	local alloc_end_sector=$2
 	local -n bisection_output=$3
@@ -580,20 +581,30 @@ stage2_arrange() {
 		target_start_sector=$3
 		target_end_sector=$((target_start_sector + (source_end_sector - source_start_sector)))
 		if (( source_start_sector == target_start_sector )); then
+			# source data is already at target destination, no need to do anything
 			unset 'srcdst_map[-1]'
 			continue
 		elif (( target_start_sector >= source_end_sector ||
 				source_start_sector >= target_end_sector )); then
+			# source and target extents don't overlap. just pop this entry off the list
 			unset 'srcdst_map[-1]'
 		else
-			local new_extent_sectors=$((target_start_sector - source_start_sector))
-			new_extent_sectors=${new_extent_sectors#-}  # absolute value
-			set -- \
-				$((source_start_sector + new_extent_sectors)) \
-				$((source_end_sector)) \
-				$((target_start_sector + new_extent_sectors))
-			srcdst_map[-1]="$*"
-			source_end_sector=$((source_start_sector + new_extent_sectors))
+			# source and target extents overlap.
+			if (( source_start_sector > target_start_sector )); then
+				# no problem: by the time source starts to get overwritten,
+				# the overwritten data will no longer be needed.
+				unset 'srcdst_map[-1]'
+			else
+				# we're gonna lose data as soon as we start copying, so copy it backwards.
+				local new_extent_sectors=$((target_start_sector - source_start_sector))
+				set -- \
+					$((source_start_sector)) \
+					$((source_end_sector - new_extent_sectors)) \
+					$((target_start_sector))
+				srcdst_map[-1]="$*"
+				source_start_sector=$((source_end_sector - new_extent_sectors))
+				target_start_sector=$((target_end_sector - new_extent_sectors))
+			fi
 		fi
 		local overlap_start_sector overlap_end_sector
 		check_for_allocation_overlap \

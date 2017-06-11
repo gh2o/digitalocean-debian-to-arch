@@ -7,6 +7,3 @@ After=systemd-udevd.service
 [Service]
 Type=oneshot
 ExecStart=/usr/sbin/digitalocean-synchronize
-
-[Install]
-WantedBy=multi-user.target

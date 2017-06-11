@@ -1,0 +1,7 @@
+# Prevent virtio network devices from being renamed.
+
+[Match]
+Driver=virtio_net
+
+[Link]
+NamePolicy=kernel

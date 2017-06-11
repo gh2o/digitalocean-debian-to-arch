@@ -1,4 +1,0 @@
-#!/bin/sh
-post_install() {
-    systemctl enable digitalocean-synchronize.service
-}

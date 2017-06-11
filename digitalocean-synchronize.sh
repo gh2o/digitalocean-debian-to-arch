@@ -83,6 +83,12 @@ process_interface() {
 			fi
 			log "Added IPv4 address ${address}/${prefix} on ${interface}."
 		fi
+		if [[ " ${attrs} " =~ " anchor_ipv4/ " ]]; then
+			local address=$(curl -sf ${url}anchor_ipv4/address)
+			local prefix=$(netmask_to_prefix $(curl -sf ${url}anchor_ipv4/netmask))
+			echo "Address=${address}/${prefix}"
+			log "Added Anchor IPv4 address ${address}/${prefix} on ${interface}."
+		fi
 		if [[ " ${attrs} " =~ " ipv6/ " ]]; then
 			local address=$(curl -sf ${url}ipv6/address)
 			local prefix=$(curl -sf ${url}ipv6/cidr)

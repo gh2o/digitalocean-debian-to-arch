@@ -32,16 +32,24 @@ check_sha256sums() {
     echo "OK!"
 }
 
-check_install_sh() {
+generate_install_sh() {
     echo -n ">>> Generating install.sh ... "
     ./tools/build_self_contained_install.sh > install.sh
     git add install.sh
     echo "OK!"
 }
 
+generate_srcinfo() {
+    echo -n ">>> Generating .SRCINFO ... "
+    ( cd aur && makepkg --printsrcinfo > .SRCINFO )
+    git add aur/.SRCINFO
+    echo "OK!"
+}
+
 echo ">>> PRECOMMIT CHECK"
 
 check_sha256sums
-check_install_sh
+generate_install_sh
+generate_srcinfo
 
 echo ">>> PRECOMMIT OK"

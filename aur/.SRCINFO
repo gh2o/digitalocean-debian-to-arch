@@ -1,0 +1,18 @@
+pkgbase = digitalocean-synchronize
+	pkgdesc = DigitalOcean Synchronization (passwords, keys, networks)
+	pkgver = 2.6
+	pkgrel = 1
+	url = https://github.com/gh2o/digitalocean-debian-to-arch
+	arch = any
+	license = GPL
+	depends = wget
+	options = !strip
+	source = digitalocean-synchronize.sh
+	source = digitalocean-synchronize.service
+	source = 90-dosync-virtio-no-rename.link
+	sha256sums = 37261e4f5a79a5308e8e94925a037cc2e3d13fa5a473f6fc9b57bed07c06ed5d
+	sha256sums = 0e51944270c52293f81ea63cb73af42f93341009ddf714ca3a7afe9d4d15a2a8
+	sha256sums = d85cde96e602a4ff296d18a7769c683a66feffe5db35a03cdeab651922681f85
+
+pkgname = digitalocean-synchronize
+

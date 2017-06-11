@@ -4,7 +4,7 @@ set -eu
 set -o pipefail
 
 cd "$(dirname "${0}")"
-while [ ! -e PKGBUILD ]; do cd ..; done
+while [ ! -e aur ]; do cd ..; done
 exec >&2
 
 check_sha256sums() {
@@ -12,7 +12,7 @@ check_sha256sums() {
     local calculated
     echo -n ">>> Checking PKGBUILD sha256sums ... "
     (
-        . PKGBUILD
+        . aur/PKGBUILD
 
         if [ ${#source[@]} -ne ${#sha256sums[@]} ]; then
             echo "!!! Wrong number of sha256sums!"
@@ -22,7 +22,7 @@ check_sha256sums() {
         for i in $(eval "echo {1..${#source[@]}}"); do
             (( i-- ))
             expected=${sha256sums[$i]}
-            calculated=$(sha256sum ${source[$i]} | cut -d' ' -f1)
+            calculated=$(sha256sum aur/${source[$i]} | cut -d' ' -f1)
             if [ $expected != $calculated ]; then
                 echo "!!! Wrong checksum on ${source[$i]}!"
                 exit 1

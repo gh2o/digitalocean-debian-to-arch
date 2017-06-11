@@ -1,0 +1,1 @@
+components/digitalocean-synchronize.sh

@@ -111,7 +111,9 @@ biosboot_offset_MiB=$((doroot_offset_MiB + doroot_size_MiB))
 archroot_offset_MiB=$((biosboot_offset_MiB + biosboot_size_MiB))
 
 log() {
-	echo "[$(date)]" "$@" >&2
+	local color_on=$'\e[0;32m'
+	local color_off=$'\e[0m'
+	echo "${color_on}[$(date)]${color_off} $@" >&2
 }
 
 fatal() {

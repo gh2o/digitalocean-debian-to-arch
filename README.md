@@ -52,7 +52,10 @@ This script supports several flags, all of which are optional.
 * `--target_filesystem`  
   The filesystem on which the Arch Linux installation should be installed.
   Defaults to `ext4`. The alternative is `btrfs`.
-  
+* `--mkfs_options`
+  Extra options to pass to `mkfs`. Useful for settings bytes per inode on ext4,
+  e.g. `--mkfs_options="-i 65536"`.
+
 How it Works
 ------------
 1. A sparse disk image is created with the same size of the droplet's disk.

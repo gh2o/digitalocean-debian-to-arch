@@ -91,6 +91,8 @@ flag_variables=(
 host_packages=(
 	haveged
 	parted
+	psmisc
+	busybox
 )
 
 arch_packages=(
@@ -230,8 +232,8 @@ sanity_checks() {
 	[ ${EUID} -eq 0 ] || fatal "Script must be run as root."
 	[ ${UID} -eq 0 ] || fatal "Script must be run as root."
 	[ -e /dev/vda ] || fatal "Script must be run on a KVM machine."
-	[[ "$(cat /etc/debian_version)" == 8.? ]] || \
-		fatal "This script only supports Debian 8.x."
+	[[ "$(cat /etc/debian_version)" == 9.? ]] || \
+		fatal "This script only supports Debian 9.x."
 }
 
 prompt_for_destruction() {
@@ -336,6 +338,7 @@ stage1_install() {
 	mkdir -p /d2a/work
 
 	log "Installing required packages ..."
+	DEBIAN_FRONTEND=noninteractive apt-get update -y
 	DEBIAN_FRONTEND=noninteractive apt-get install -y ${host_packages[@]}
 
 	log "Partitioning image ..."

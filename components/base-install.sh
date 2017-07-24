@@ -232,8 +232,8 @@ sanity_checks() {
 	[ ${EUID} -eq 0 ] || fatal "Script must be run as root."
 	[ ${UID} -eq 0 ] || fatal "Script must be run as root."
 	[ -e /dev/vda ] || fatal "Script must be run on a KVM machine."
-	[[ "$(cat /etc/debian_version)" == 9.? ]] || \
-		fatal "This script only supports Debian 9.x."
+	[[ "$(cat /etc/debian_version)" == [89].? ]] || \
+		fatal "This script only supports Debian 8.x/9.x."
 }
 
 prompt_for_destruction() {

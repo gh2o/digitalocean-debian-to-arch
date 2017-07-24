@@ -91,6 +91,8 @@ flag_variables=(
 host_packages=(
 	haveged
 	parted
+	psmisc
+	busybox
 )
 
 arch_packages=(
@@ -126,7 +128,7 @@ extract_digitalocean_synchronize() {
 	local outdir="$1"
 	mkdir -p "${outdir}"
 	awk 'x {print} $0 == "### digitalocean-synchronize ###" {x=1}' "$0" | \
-		base64 -d | tar -JxC "${outdir}"
+		base64 -d | tar -zxC "${outdir}"
 }
 
 parse_flags() {
@@ -230,8 +232,8 @@ sanity_checks() {
 	[ ${EUID} -eq 0 ] || fatal "Script must be run as root."
 	[ ${UID} -eq 0 ] || fatal "Script must be run as root."
 	[ -e /dev/vda ] || fatal "Script must be run on a KVM machine."
-	[[ "$(cat /etc/debian_version)" == 8.? ]] || \
-		fatal "This script only supports Debian 8.x."
+	[[ "$(cat /etc/debian_version)" == [89].? ]] || \
+		fatal "This script only supports Debian 8.x/9.x."
 }
 
 prompt_for_destruction() {
@@ -336,6 +338,7 @@ stage1_install() {
 	mkdir -p /d2a/work
 
 	log "Installing required packages ..."
+	DEBIAN_FRONTEND=noninteractive apt-get update -y
 	DEBIAN_FRONTEND=noninteractive apt-get install -y ${host_packages[@]}
 
 	log "Partitioning image ..."
@@ -421,6 +424,9 @@ stage1_install() {
 	chroot /d2a/work/archroot systemctl enable systemd-networkd.service
 	chroot /d2a/work/archroot systemctl enable sshd.service
 
+	log "Forcing fallback kernel ..." # cannot trust autodetect when running on Debian kernel
+	cp /d2a/work/archroot/boot/initramfs-linux{-fallback,}.img
+
 	log "Installing digitalocean-synchronize ..."
 	extract_digitalocean_synchronize /d2a/work/archroot/dosync
 	chroot /d2a/work/archroot bash -c 'cd /dosync && env EUID=1 makepkg --install --noconfirm'
@@ -471,14 +477,14 @@ bisect_left_on_allocation() {
 check_for_allocation_overlap() {
 	local check_start_sector=$1
 	local check_end_sector=$2
-	local -n overlap_start_sector=$3
-	local -n overlap_end_sector=$4
+	local -n cfao_overlap_start_sector=$3
+	local -n cfao_overlap_end_sector=$4
 	shift 4
 	local allocation_maps="$*"
 
-	# overlap_end_sector = 0 if no overlap
-	overlap_start_sector=0
-	overlap_end_sector=0
+	# cfao_overlap_end_sector = 0 if no overlap
+	cfao_overlap_start_sector=0
+	cfao_overlap_end_sector=0
 
 	local map_name
 	for map_name in ${allocation_maps}; do
@@ -497,9 +503,9 @@ check_for_allocation_overlap() {
 			local alloc_end_sector=$2
 			(( check_start_sector >= alloc_end_sector || alloc_start_sector >= check_end_sector )) && continue
 			# overlap detected
-			overlap_start_sector=$((alloc_start_sector > check_start_sector ?
+			cfao_overlap_start_sector=$((alloc_start_sector > check_start_sector ?
 				alloc_start_sector : check_start_sector))
-			overlap_end_sector=$((alloc_end_sector < check_end_sector ?
+			cfao_overlap_end_sector=$((alloc_end_sector < check_end_sector ?
 				alloc_end_sector : check_end_sector))
 			return
 		done
@@ -749,16 +755,18 @@ stage4_convert() {
 
 	# unmount old root
 	local retry
-	for retry in 1 2 3 4 5; do
-		if umount /mnt; then
-			retry=0
-			break
-		else
-			sleep 1
+	if [ -e /mnt ] && [ $(stat -c %d /mnt) -ne $(stat -c %d /) ]; then
+		for retry in 1 2 3 4 5; do
+			if umount /mnt; then
+				retry=0
+				break
+			else
+				sleep 1
+			fi
+		done
+		if (( retry )); then
+			umount -rl /mnt
 		fi
-	done
-	if (( retry )); then
-		umount -rl /mnt
 	fi
 
 	# get total number of sectors

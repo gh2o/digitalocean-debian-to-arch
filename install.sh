@@ -91,6 +91,8 @@ flag_variables=(
 host_packages=(
 	haveged
 	parted
+	psmisc
+	busybox
 )
 
 arch_packages=(
@@ -126,7 +128,7 @@ extract_digitalocean_synchronize() {
 	local outdir="$1"
 	mkdir -p "${outdir}"
 	awk 'x {print} $0 == "### digitalocean-synchronize ###" {x=1}' "$0" | \
-		base64 -d | tar -JxC "${outdir}"
+		base64 -d | tar -zxC "${outdir}"
 }
 
 parse_flags() {
@@ -230,8 +232,8 @@ sanity_checks() {
 	[ ${EUID} -eq 0 ] || fatal "Script must be run as root."
 	[ ${UID} -eq 0 ] || fatal "Script must be run as root."
 	[ -e /dev/vda ] || fatal "Script must be run on a KVM machine."
-	[[ "$(cat /etc/debian_version)" == 8.? ]] || \
-		fatal "This script only supports Debian 8.x."
+	[[ "$(cat /etc/debian_version)" == [89].? ]] || \
+		fatal "This script only supports Debian 8.x/9.x."
 }
 
 prompt_for_destruction() {
@@ -336,6 +338,7 @@ stage1_install() {
 	mkdir -p /d2a/work
 
 	log "Installing required packages ..."
+	DEBIAN_FRONTEND=noninteractive apt-get update -y
 	DEBIAN_FRONTEND=noninteractive apt-get install -y ${host_packages[@]}
 
 	log "Partitioning image ..."
@@ -421,6 +424,9 @@ stage1_install() {
 	chroot /d2a/work/archroot systemctl enable systemd-networkd.service
 	chroot /d2a/work/archroot systemctl enable sshd.service
 
+	log "Forcing fallback kernel ..." # cannot trust autodetect when running on Debian kernel
+	cp /d2a/work/archroot/boot/initramfs-linux{-fallback,}.img
+
 	log "Installing digitalocean-synchronize ..."
 	extract_digitalocean_synchronize /d2a/work/archroot/dosync
 	chroot /d2a/work/archroot bash -c 'cd /dosync && env EUID=1 makepkg --install --noconfirm'
@@ -471,14 +477,14 @@ bisect_left_on_allocation() {
 check_for_allocation_overlap() {
 	local check_start_sector=$1
 	local check_end_sector=$2
-	local -n overlap_start_sector=$3
-	local -n overlap_end_sector=$4
+	local -n cfao_overlap_start_sector=$3
+	local -n cfao_overlap_end_sector=$4
 	shift 4
 	local allocation_maps="$*"
 
-	# overlap_end_sector = 0 if no overlap
-	overlap_start_sector=0
-	overlap_end_sector=0
+	# cfao_overlap_end_sector = 0 if no overlap
+	cfao_overlap_start_sector=0
+	cfao_overlap_end_sector=0
 
 	local map_name
 	for map_name in ${allocation_maps}; do
@@ -497,9 +503,9 @@ check_for_allocation_overlap() {
 			local alloc_end_sector=$2
 			(( check_start_sector >= alloc_end_sector || alloc_start_sector >= check_end_sector )) && continue
 			# overlap detected
-			overlap_start_sector=$((alloc_start_sector > check_start_sector ?
+			cfao_overlap_start_sector=$((alloc_start_sector > check_start_sector ?
 				alloc_start_sector : check_start_sector))
-			overlap_end_sector=$((alloc_end_sector < check_end_sector ?
+			cfao_overlap_end_sector=$((alloc_end_sector < check_end_sector ?
 				alloc_end_sector : check_end_sector))
 			return
 		done
@@ -749,16 +755,18 @@ stage4_convert() {
 
 	# unmount old root
 	local retry
-	for retry in 1 2 3 4 5; do
-		if umount /mnt; then
-			retry=0
-			break
-		else
-			sleep 1
+	if [ -e /mnt ] && [ $(stat -c %d /mnt) -ne $(stat -c %d /) ]; then
+		for retry in 1 2 3 4 5; do
+			if umount /mnt; then
+				retry=0
+				break
+			else
+				sleep 1
+			fi
+		done
+		if (( retry )); then
+			umount -rl /mnt
 		fi
-	done
-	if (( retry )); then
-		umount -rl /mnt
 	fi
 
 	# get total number of sectors
@@ -846,48 +854,47 @@ exit 0
 
 # Line below delineates start of base64 data, DO NOT MODIFY.
 ### digitalocean-synchronize ###
-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
-AARZWg==
+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
+9ownIQ+ePfS5Pbfn9tz+p9q/AStoNfQAKAAA

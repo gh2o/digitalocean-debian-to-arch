@@ -4,8 +4,6 @@ DigitalOcean deprecated Arch Linux a while back because it was relatively
 difficult to support due to the rolling updates. I wrote this script to
 bring it back! This script downloads a bootstrap Arch Linux image, updates it
 to the latest version, then overwrites the host operating system with it.
-Unlike Debian 7.x, Debian 8.x on DigitalOcean boots traditionally (through the
-MBR and Grub), so no dirty *kexec* magic is needed.
 
 Warning / Disclaimer
 --------------------
@@ -16,10 +14,10 @@ important data.
 
 Installation
 ------------
-1. Create a new Debian 8.x droplet (either 32-bit or 64-bit is fine).
+1. Create a new Debian 9.x droplet (either 32-bit or 64-bit is fine).
 2. In the droplet, run the following as root:
 
-        # wget https://raw.githubusercontent.com/gh2o/digitalocean-debian-to-arch/debian8/install.sh -O install.sh
+        # wget https://raw.githubusercontent.com/gh2o/digitalocean-debian-to-arch/debian9/install.sh -O install.sh
         # bash install.sh
 
 3. Follow the instructions when prompted.

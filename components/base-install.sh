@@ -477,14 +477,14 @@ bisect_left_on_allocation() {
 check_for_allocation_overlap() {
 	local check_start_sector=$1
 	local check_end_sector=$2
-	local -n overlap_start_sector=$3
-	local -n overlap_end_sector=$4
+	local -n cfao_overlap_start_sector=$3
+	local -n cfao_overlap_end_sector=$4
 	shift 4
 	local allocation_maps="$*"
 
-	# overlap_end_sector = 0 if no overlap
-	overlap_start_sector=0
-	overlap_end_sector=0
+	# cfao_overlap_end_sector = 0 if no overlap
+	cfao_overlap_start_sector=0
+	cfao_overlap_end_sector=0
 
 	local map_name
 	for map_name in ${allocation_maps}; do
@@ -503,9 +503,9 @@ check_for_allocation_overlap() {
 			local alloc_end_sector=$2
 			(( check_start_sector >= alloc_end_sector || alloc_start_sector >= check_end_sector )) && continue
 			# overlap detected
-			overlap_start_sector=$((alloc_start_sector > check_start_sector ?
+			cfao_overlap_start_sector=$((alloc_start_sector > check_start_sector ?
 				alloc_start_sector : check_start_sector))
-			overlap_end_sector=$((alloc_end_sector < check_end_sector ?
+			cfao_overlap_end_sector=$((alloc_end_sector < check_end_sector ?
 				alloc_end_sector : check_end_sector))
 			return
 		done

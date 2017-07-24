@@ -424,6 +424,9 @@ stage1_install() {
 	chroot /d2a/work/archroot systemctl enable systemd-networkd.service
 	chroot /d2a/work/archroot systemctl enable sshd.service
 
+	log "Forcing fallback kernel ..." # cannot trust autodetect when running on Debian kernel
+	cp /d2a/work/archroot/boot/initramfs-linux{-fallback,}.img
+
 	log "Installing digitalocean-synchronize ..."
 	extract_digitalocean_synchronize /d2a/work/archroot/dosync
 	chroot /d2a/work/archroot bash -c 'cd /dosync && env EUID=1 makepkg --install --noconfirm'

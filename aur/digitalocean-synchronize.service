@@ -1,7 +1,7 @@
 [Unit]
 Description=DigitalOcean Synchronization
 DefaultDependencies=no
-Before=systemd-networkd.service
+Before=systemd-networkd.service sshdgenkeys.service
 After=systemd-udevd.service
 
 [Service]

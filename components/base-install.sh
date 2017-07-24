@@ -752,16 +752,18 @@ stage4_convert() {
 
 	# unmount old root
 	local retry
-	for retry in 1 2 3 4 5; do
-		if umount /mnt; then
-			retry=0
-			break
-		else
-			sleep 1
+	if [ -e /mnt ] && [ $(stat -c %d /mnt) -ne $(stat -c %d /) ]; then
+		for retry in 1 2 3 4 5; do
+			if umount /mnt; then
+				retry=0
+				break
+			else
+				sleep 1
+			fi
+		done
+		if (( retry )); then
+			umount -rl /mnt
 		fi
-	done
-	if (( retry )); then
-		umount -rl /mnt
 	fi
 
 	# get total number of sectors

@@ -425,7 +425,7 @@ stage1_install() {
 	chroot /d2a/work/archroot systemctl enable sshd.service
 
 	log "Forcing fallback kernel ..." # cannot trust autodetect when running on Debian kernel
-	cp /d2a/work/archroot/boot/initramfs-linux{-fallback,}.img
+	cp /d2a/work/archroot/boot/initramfs-${kernel_package}{-fallback,}.img
 
 	log "Installing digitalocean-synchronize ..."
 	extract_digitalocean_synchronize /d2a/work/archroot/dosync

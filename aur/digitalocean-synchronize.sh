@@ -123,7 +123,7 @@ traverse_interfaces() {
 
 setup_from_metadata_service() {
 	local sshkeys
-	if sshkeys=$(curl -Ssf ${meta_base}public-keys) && test -n "${sshkeys}"; then
+	if sshkeys=$(curl -Ssf ${meta_base}public-keys) && test -n "${sshkeys}" && grep -q $'AuthorizedKeysFile\t.ssh/authorized_keys' /etc/ssh/sshd_config; then
 		[ -d /root/.ssh ] || mkdir -m 0700 /root/.ssh
 		[ -e /root/.ssh/authorized_keys ] || touch /root/.ssh/authorized_keys
 		if ! grep -q "${sshkeys}" /root/.ssh/authorized_keys; then

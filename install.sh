@@ -809,6 +809,7 @@ stage4_convert() {
 	mount -t proc proc /archroot/proc
 	mount -t sysfs sys /archroot/sys
 	mount -t devtmpfs dev /archroot/dev
+	chroot /archroot sed -i "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/" /etc/default/grub
 	chroot /archroot grub-mkconfig -o /boot/grub/grub.cfg
 	chroot /archroot grub-install /dev/vda
 	umount /archroot/dev

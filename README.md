@@ -28,31 +28,33 @@ Advanced Configuration
 ----------------------
 This script supports several flags, all of which are optional.
 
-* `--archlinux_mirror`  
+* `--archlinux_mirror`
   The Arch Linux mirror from which the bootstrap image and packages should be
-  downloaded. Defaults to http://mirrors.kernel.org/archlinux
-* `--extra_packages`  
+  downloaded. Defaults to http://mirrors.kernel.org/archlinux.
+* `--extra_packages`
   Installs any extra packages to the Arch installation (e.g. base-devel).
   Packages should be space-separated and quoted
   (e.g. `--extra_packages "git wget"`).
-* `--kernel_package`  
+* `--grub_timeout`
+  Overrides the default GRUB_TIMEOUT value of 5 seconds.
+* `--kernel_package`
   The kernel package to install. Defaults to the vanilla `linux` package.
   Other options include `linux-lts` for long term support and `linux-hardened` for
   a kernel with patches from [linux-hardened](https://github.com/thestinger/linux-hardened).
-* `--target_architecture`  
+* `--mkfs_options`
+  Extra options to pass to `mkfs`. Useful for settings bytes per inode on ext4,
+  e.g. `--mkfs_options="-i 65536"`.
+* `--target_architecture`
   The architecture of the new Arch Linux installation. Defaults to the
   architecture of the original Debian image as provided by `uname -m`.
   A 64-bit Debian image may convert to either `x86_64` or `i686`.
   A 32-bit Debian image may only convert to `i686`.
-* `--target_disklabel`  
+* `--target_disklabel`
   The type of partition table to use. Defaults to `gpt` (GUID partition table
   as used by EFI). The alternative is `dos` (traditional MBR).
-* `--target_filesystem`  
+* `--target_filesystem`
   The filesystem on which the Arch Linux installation should be installed.
   Defaults to `ext4`. The alternative is `btrfs`.
-* `--mkfs_options`
-  Extra options to pass to `mkfs`. Useful for settings bytes per inode on ext4,
-  e.g. `--mkfs_options="-i 65536"`.
 
 How it Works
 ------------

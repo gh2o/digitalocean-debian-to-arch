@@ -30,15 +30,20 @@ This script supports several flags, all of which are optional.
 
 * `--archlinux_mirror`  
   The Arch Linux mirror from which the bootstrap image and packages should be
-  downloaded. Defaults to http://mirrors.kernel.org/archlinux
+  downloaded. Defaults to http://mirrors.kernel.org/archlinux.
 * `--extra_packages`  
   Installs any extra packages to the Arch installation (e.g. base-devel).
   Packages should be space-separated and quoted
   (e.g. `--extra_packages "git wget"`).
+* `--grub_timeout`  
+  Overrides the default GRUB_TIMEOUT value of 5 seconds.
 * `--kernel_package`  
   The kernel package to install. Defaults to the vanilla `linux` package.
   Other options include `linux-lts` for long term support and `linux-hardened` for
   a kernel with patches from [linux-hardened](https://github.com/thestinger/linux-hardened).
+* `--mkfs_options`  
+  Extra options to pass to `mkfs`. Useful for settings bytes per inode on ext4,
+  e.g. `--mkfs_options="-i 65536"`.
 * `--target_architecture`  
   The architecture of the new Arch Linux installation. Defaults to the
   architecture of the original Debian image as provided by `uname -m`.
@@ -50,9 +55,6 @@ This script supports several flags, all of which are optional.
 * `--target_filesystem`  
   The filesystem on which the Arch Linux installation should be installed.
   Defaults to `ext4`. The alternative is `btrfs`.
-* `--mkfs_options`
-  Extra options to pass to `mkfs`. Useful for settings bytes per inode on ext4,
-  e.g. `--mkfs_options="-i 65536"`.
 
 How it Works
 ------------

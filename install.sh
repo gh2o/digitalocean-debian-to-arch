@@ -37,8 +37,14 @@ archlinux_mirror="http://mirrors.kernel.org/archlinux"
 # extra packages
 extra_packages=""
 
+# grub timeout
+grub_timeout=5
+
 # package to use as kernel (linux or linux-lts)
 kernel_package=linux
+
+# extra mkfs options
+mkfs_options=""
 
 # migrated machine architecture (x86_64/i686)
 target_architecture="$(uname -m)"
@@ -48,9 +54,6 @@ target_disklabel="gpt"
 
 # new filesystem type (ext4/btrfs)
 target_filesystem="ext4"
-
-# extra mkfs options
-mkfs_options=""
 
 # NOT EXPOSED NORMALLY: don't prompt
 continue_without_prompting=0
@@ -81,6 +84,7 @@ sector_size=512
 flag_variables=(
 	archlinux_mirror
 	extra_packages
+	grub_timeout
 	kernel_package
 	target_architecture
 	target_disklabel
@@ -809,6 +813,7 @@ stage4_convert() {
 	mount -t proc proc /archroot/proc
 	mount -t sysfs sys /archroot/sys
 	mount -t devtmpfs dev /archroot/dev
+	chroot /archroot sed -i "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=${grub_timeout}/" /etc/default/grub
 	chroot /archroot grub-mkconfig -o /boot/grub/grub.cfg
 	chroot /archroot grub-install /dev/vda
 	umount /archroot/dev

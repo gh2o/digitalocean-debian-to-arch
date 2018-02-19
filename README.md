@@ -54,7 +54,7 @@ This script supports several flags, all of which are optional.
   as used by EFI). The alternative is `dos` (traditional MBR).
 * `--target_filesystem`  
   The filesystem on which the Arch Linux installation should be installed.
-  Defaults to `ext4`. The alternative is `btrfs`.
+  Defaults to `ext4`. The alternative is `btrfs` and `xfs`.
 
 How it Works
 ------------

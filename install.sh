@@ -72,7 +72,7 @@ target_architecture="$(uname -m)"
 # new disklabel type (gpt/dos)
 target_disklabel="gpt"
 
-# new filesystem type (ext4/btrfs)
+# new filesystem type (ext4/xfs/btrfs)
 target_filesystem="ext4"
 
 # NOT EXPOSED NORMALLY: don't prompt
@@ -227,6 +227,10 @@ validate_flags_and_augment_globals() {
 		btrfs)
 			host_packages+=(btrfs-tools)
 			arch_packages+=(btrfs-progs)
+			;;
+		xfs)
+			host_packages+=(xfsprogs)
+			arch_packages+=(xfsprogs)
 			;;
 		*)
 			fatal "Unknown filesystem type: ${target_filesystem}"

@@ -66,13 +66,16 @@ kernel_package=linux
 # extra mkfs options
 mkfs_options=""
 
+# extra mount options
+mount_options=""
+
 # migrated machine architecture (x86_64/i686)
 target_architecture="$(uname -m)"
 
 # new disklabel type (gpt/dos)
 target_disklabel="gpt"
 
-# new filesystem type (ext4/btrfs)
+# new filesystem type (ext4/xfs/btrfs)
 target_filesystem="ext4"
 
 # NOT EXPOSED NORMALLY: don't prompt
@@ -110,6 +113,7 @@ flag_variables=(
 	target_disklabel
 	target_filesystem
 	mkfs_options
+        mount_options
 )
 
 host_packages=(
@@ -227,6 +231,10 @@ validate_flags_and_augment_globals() {
 		btrfs)
 			host_packages+=(btrfs-tools)
 			arch_packages+=(btrfs-progs)
+			;;
+		xfs)
+			host_packages+=(xfsprogs)
+			arch_packages+=(xfsprogs)
 			;;
 		*)
 			fatal "Unknown filesystem type: ${target_filesystem}"
@@ -380,7 +388,7 @@ stage1_install() {
 	log "Mounting image ..."
 	mkdir -p /d2a/work/{doroot,archroot}
 	mount ${doroot_loop} /d2a/work/doroot
-	mount ${archroot_loop} /d2a/work/archroot
+	mount ${mount_options:+-o} "${mount_options}" ${archroot_loop} /d2a/work/archroot
 
 	log "Setting up DOROOT ..."
 	mkdir -p /d2a/work/doroot/etc/network

@@ -66,6 +66,9 @@ kernel_package=linux
 # extra mkfs options
 mkfs_options=""
 
+# extra mount options
+mount_options=""
+
 # migrated machine architecture (x86_64/i686)
 target_architecture="$(uname -m)"
 
@@ -110,6 +113,7 @@ flag_variables=(
 	target_disklabel
 	target_filesystem
 	mkfs_options
+        mount_options
 )
 
 host_packages=(
@@ -384,7 +388,7 @@ stage1_install() {
 	log "Mounting image ..."
 	mkdir -p /d2a/work/{doroot,archroot}
 	mount ${doroot_loop} /d2a/work/doroot
-	mount ${archroot_loop} /d2a/work/archroot
+	mount ${mount_options:+-o} "${mount_options}" ${archroot_loop} /d2a/work/archroot
 
 	log "Setting up DOROOT ..."
 	mkdir -p /d2a/work/doroot/etc/network

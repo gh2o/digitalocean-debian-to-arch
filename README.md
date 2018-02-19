@@ -44,6 +44,9 @@ This script supports several flags, all of which are optional.
 * `--mkfs_options`  
   Extra options to pass to `mkfs`. Useful for settings bytes per inode on ext4,
   e.g. `--mkfs_options="-i 65536"`.
+* `--mount_options`  
+  Extra options to pass to `mount`. Useful for settings compression algorithm on btrfs.
+  e.g. `--mount_options="compress=zstd,noatime"`.
 * `--target_architecture`  
   The architecture of the new Arch Linux installation. Defaults to the
   architecture of the original Debian image as provided by `uname -m`.

@@ -79,6 +79,8 @@ target_filesystem="ext4"
 continue_without_prompting=0
 
 # NOT EXPOSED NORMALLY: path to metadata service
+# DigitalOcean metadata API
+# https://developers.digitalocean.com/documentation/metadata/
 meta_base=http://169.254.169.254/metadata/v1/
 
 ########################################

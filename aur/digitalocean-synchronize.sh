@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# DigitalOcean metadata API
+# https://developers.digitalocean.com/documentation/metadata/
 meta_base=http://169.254.169.254/metadata/v1/
 
 set -eu

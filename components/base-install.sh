@@ -106,24 +106,24 @@ flag_variables=(
 	extra_packages
 	grub_timeout
 	kernel_package
+	mkfs_options
 	target_architecture
 	target_disklabel
 	target_filesystem
-	mkfs_options
 )
 
 host_packages=(
+	busybox
 	haveged
 	parted
 	psmisc
-	busybox
 )
 
 arch_packages=(
+	fakeroot # for makepkg
 	grub
 	openssh
 	wget     # for digitalocean-synchronize
-	fakeroot # for makepkg
 )
 
 gpt1_size_MiB=1

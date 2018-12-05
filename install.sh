@@ -827,7 +827,13 @@ stage4_convert() {
 	echo
 
 	# reread partition table
-	blockdev --rereadpt /dev/vda
+	(while true; do
+		if blockdev --rereadpt /dev/vda; then
+			break
+		fi
+		echo "failed to read partition table, trying again..."
+		sleep 1
+	done) >>/dev/kmsg 2>&1
 
 	# install bootloader
 	mkdir /archroot

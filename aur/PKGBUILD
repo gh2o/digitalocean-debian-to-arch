@@ -17,7 +17,7 @@ source=(digitalocean-synchronize.sh
         digitalocean-synchronize.service
         90-dosync-virtio-no-rename.link)
 
-sha256sums=('521e9ec8c6382151313b8bd936450d8a3bc56c052f1bad4b74777ebc4900af53'
+sha256sums=('1d337c46c84d69ac0c7e8b6404ffbe5e3fbd8aa184a3f9ff3139f115a390db4c'
             '25e28f7b3351662b8e2da71aee38a1131df2568177e676e49f47a75d33894d64'
             'd85cde96e602a4ff296d18a7769c683a66feffe5db35a03cdeab651922681f85')
 

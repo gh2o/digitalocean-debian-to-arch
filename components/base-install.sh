@@ -773,11 +773,21 @@ stage3_prepare() {
 
 stage4_convert_exit() {
 	log "Error occurred. You're on your own!"
-	exec /bin/bash </dev/console >/dev/console 2>&1
+	exec /bin/bash
 }
 
 stage4_convert() {
+	# /dev/console doesn't work, log to /dev/tty0
+	exec </dev/tty0
+	exec >/dev/tty0
+	exec 2>/dev/tty0
+
+	# run stage4_convert_exit upon error
 	trap stage4_convert_exit EXIT
+
+	# ensure that all other processes are dead
+	sysctl -w kernel.sysrq=1 >/dev/null
+	echo i > /proc/sysrq-trigger
 
 	# unmount old root
 	local retry
@@ -836,6 +846,7 @@ stage4_convert() {
 	mount -t sysfs sys /archroot/sys
 	mount -t devtmpfs dev /archroot/dev
 	chroot /archroot sed -i "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=${grub_timeout}/" /etc/default/grub
+	chroot /archroot mkdir -p /boot/grub
 	chroot /archroot grub-mkconfig -o /boot/grub/grub.cfg
 	chroot /archroot grub-install /dev/vda
 	umount /archroot/dev

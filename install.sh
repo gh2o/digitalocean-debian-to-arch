@@ -439,8 +439,7 @@ stage1_install() {
 	local chroot_pacman="chroot /d2a/work/archroot pacman --arch ${target_architecture} --force"
 	${chroot_pacman} -Sy
 	${chroot_pacman} -Su --noconfirm --needed \
-		$(${chroot_pacman} -Sgq base | grep -v '^linux$') \
-		${arch_packages[@]} ${extra_packages}
+		base ${arch_packages[@]} ${extra_packages}
 
 	log "Configuring base system ..."
 	hostname > /d2a/work/archroot/etc/hostname

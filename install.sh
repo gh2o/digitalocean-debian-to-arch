@@ -436,7 +436,7 @@ stage1_install() {
 	log "Installing base system ..."
 	chroot /d2a/work/archroot pacman-key --init
 	chroot /d2a/work/archroot pacman-key --populate archlinux
-	local chroot_pacman="chroot /d2a/work/archroot pacman --arch ${target_architecture} --force"
+	local chroot_pacman="chroot /d2a/work/archroot pacman --arch ${target_architecture}"
 	${chroot_pacman} -Sy
 	${chroot_pacman} -Su --noconfirm --needed \
 		base ${arch_packages[@]} ${extra_packages}

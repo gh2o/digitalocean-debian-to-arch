@@ -258,7 +258,7 @@ sanity_checks() {
 	[ ${EUID} -eq 0 ] || fatal "Script must be run as root."
 	[ ${UID} -eq 0 ] || fatal "Script must be run as root."
 	[ -e /dev/vda ] || fatal "Script must be run on a KVM machine."
-	[[ "$(cat /etc/debian_version)" == [89].? ]] || \
+	[[ "$(cat /etc/debian_version)" =~ ^[89].+$ ]] || \
 		fatal "This script only supports Debian 8.x/9.x."
 }
 
@@ -439,8 +439,7 @@ stage1_install() {
 	local chroot_pacman="chroot /d2a/work/archroot pacman --arch ${target_architecture} --force"
 	${chroot_pacman} -Sy
 	${chroot_pacman} -Su --noconfirm --needed \
-		$(${chroot_pacman} -Sgq base | grep -v '^linux$') \
-		${arch_packages[@]} ${extra_packages}
+		base ${arch_packages[@]} ${extra_packages}
 
 	log "Configuring base system ..."
 	hostname > /d2a/work/archroot/etc/hostname

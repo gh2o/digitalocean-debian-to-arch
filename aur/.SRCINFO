@@ -6,6 +6,7 @@ pkgbase = digitalocean-synchronize
 	arch = any
 	license = GPL
 	depends = curl
+	depends = inetutils
 	options = !strip
 	source = digitalocean-synchronize.sh
 	source = digitalocean-synchronize.service

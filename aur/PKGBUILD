@@ -11,7 +11,10 @@ arch=(any)
 license=(GPL)
 options=(!strip)
 
-depends=(curl)
+depends=(
+  curl  # For requests to metadata service
+  inetutils  # To change the hostname with hostname command
+)
 
 source=(digitalocean-synchronize.sh
         digitalocean-synchronize.service

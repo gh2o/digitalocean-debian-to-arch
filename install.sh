@@ -125,6 +125,7 @@ arch_packages=(
 	fakeroot # for makepkg
 	grub
 	openssh
+	inetutils # for digitalocean-synchronize
 )
 
 gpt1_size_MiB=1

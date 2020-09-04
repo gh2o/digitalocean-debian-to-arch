@@ -156,7 +156,7 @@ setup_from_metadata_service() {
 	local hostname
 	if ! test -e /etc/hostname && hostname=$(curl -LSsf ${meta_base}hostname); then
 		echo "${hostname}" > /etc/hostname
-		hostname "${hostname}"
+		hostnamectl set-hostname "${hostname}"
 		log "Hostname set to ${hostname} from metadata service."
 	fi
 	traverse_interfaces ${meta_base}interfaces/

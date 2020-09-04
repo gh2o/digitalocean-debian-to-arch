@@ -13,14 +13,13 @@ options=(!strip)
 
 depends=(
   curl  # For requests to metadata service
-  inetutils  # To change the hostname with hostname command
 )
 
 source=(digitalocean-synchronize.sh
         digitalocean-synchronize.service
         90-dosync-virtio-no-rename.link)
 
-sha256sums=('140d2d4ca51c8ab5f58bcb6a1075c71bc712d6a35990c89810d92e96b994ac34'
+sha256sums=('d6fe6486e0313b576e7cf226ae50f341cfd2c49b27855c55015cdf43d1390700'
             '25e28f7b3351662b8e2da71aee38a1131df2568177e676e49f47a75d33894d64'
             'd85cde96e602a4ff296d18a7769c683a66feffe5db35a03cdeab651922681f85')
 

@@ -258,7 +258,7 @@ sanity_checks() {
 	[ ${EUID} -eq 0 ] || fatal "Script must be run as root."
 	[ ${UID} -eq 0 ] || fatal "Script must be run as root."
 	[ -e /dev/vda ] || fatal "Script must be run on a KVM machine."
-	[[ "$(cat /etc/debian_version)" =~ ^[89].+$ ]] || \
+	[[ "$(cat /etc/debian_version)" =~ ^([89]|10).+$ ]] || \
 		fatal "This script only supports Debian 8.x/9.x."
 }
 
@@ -375,6 +375,8 @@ stage1_install() {
 
 	log "Formatting image ..."
 	local doroot_loop=$(setup_loop_device ${doroot_offset_MiB} ${doroot_size_MiB})
+	# Work around losetup errors by sleeping a bit
+	sleep 5
 	local archroot_loop=$(setup_loop_device ${archroot_offset_MiB} ${archroot_size_MiB})
 	mkfs.ext4 -L DOROOT ${doroot_loop}
 	mkfs.${target_filesystem} -L ArchRoot ${mkfs_options} ${archroot_loop}

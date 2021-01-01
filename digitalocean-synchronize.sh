@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# DigitalOcean metadata API
+# https://developers.digitalocean.com/documentation/metadata/
 meta_base=http://169.254.169.254/metadata/v1/
 
 set -eu
@@ -74,8 +76,8 @@ update_shadow_if_changed() {
 process_interface() {
 	local url=$1
 	local attrs=$2
-	local mac=$(curl -Ssf ${url}mac)
-	local type=$(curl -Ssf ${url}type)
+	local mac=$(curl -LSsf ${url}mac)
+	local type=$(curl -LSsf ${url}type)
 	local interface=
 	local cand path
 	for cand in $(ls /sys/class/net); do
@@ -95,26 +97,26 @@ process_interface() {
 			[Network]
 		EOF
 		if [[ " ${attrs} " =~ " ipv4/ " ]]; then
-			local address=$(curl -sf ${url}ipv4/address)
-			local prefix=$(netmask_to_prefix $(curl -sf ${url}ipv4/netmask))
+			local address=$(curl -Lsf ${url}ipv4/address)
+			local prefix=$(netmask_to_prefix $(curl -Lsf ${url}ipv4/netmask))
 			echo "Address=${address}/${prefix}"
 			if [ "${type}" != "private" ]; then
-				echo "Gateway=$(curl -sf ${url}ipv4/gateway)"
+				echo "Gateway=$(curl -Lsf ${url}ipv4/gateway)"
 			fi
 			log "Added IPv4 address ${address}/${prefix} on ${interface}."
 		fi
 		if [[ " ${attrs} " =~ " anchor_ipv4/ " ]]; then
-			local address=$(curl -sf ${url}anchor_ipv4/address)
-			local prefix=$(netmask_to_prefix $(curl -sf ${url}anchor_ipv4/netmask))
+			local address=$(curl -Lsf ${url}anchor_ipv4/address)
+			local prefix=$(netmask_to_prefix $(curl -Lsf ${url}anchor_ipv4/netmask))
 			echo "Address=${address}/${prefix}"
 			log "Added Anchor IPv4 address ${address}/${prefix} on ${interface}."
 		fi
 		if [[ " ${attrs} " =~ " ipv6/ " ]]; then
-			local address=$(curl -sf ${url}ipv6/address)
-			local prefix=$(curl -sf ${url}ipv6/cidr)
+			local address=$(curl -Lsf ${url}ipv6/address)
+			local prefix=$(curl -Lsf ${url}ipv6/cidr)
 			echo "Address=${address}/${prefix}"
 			if [ "${type}" != "private" ]; then
-				echo "Gateway=$(curl -sf ${url}ipv6/gateway)"
+				echo "Gateway=$(curl -Lsf ${url}ipv6/gateway)"
 			fi
 			log "Added IPv6 address ${address}/${prefix} on ${interface}."
 		fi
@@ -128,7 +130,7 @@ process_interface() {
 
 traverse_interfaces() {
 	local url=$1
-	set -- $(curl -Ssf ${url})
+	set -- $(curl -LSsf ${url})
 	if [[ " $* " =~ " mac " ]]; then
 		process_interface ${url} "$*"
 	else
@@ -143,7 +145,7 @@ traverse_interfaces() {
 
 setup_from_metadata_service() {
 	local sshkeys
-	if sshkeys=$(curl -Ssf ${meta_base}public-keys) && test -n "${sshkeys}"; then
+	if sshkeys=$(curl -LSsf ${meta_base}public-keys) && test -n "${sshkeys}"; then
 		[ -d /root/.ssh ] || mkdir -m 0700 /root/.ssh
 		[ -e /root/.ssh/authorized_keys ] || touch /root/.ssh/authorized_keys
 		if ! grep -q "${sshkeys}" /root/.ssh/authorized_keys; then
@@ -152,9 +154,9 @@ setup_from_metadata_service() {
 		fi
 	fi
 	local hostname
-	if ! test -e /etc/hostname && hostname=$(curl -Ssf ${meta_base}hostname); then
+	if ! test -e /etc/hostname && hostname=$(curl -LSsf ${meta_base}hostname); then
 		echo "${hostname}" > /etc/hostname
-		hostname "${hostname}"
+		hostnamectl set-hostname "${hostname}"
 		log "Hostname set to ${hostname} from metadata service."
 	fi
 	traverse_interfaces ${meta_base}interfaces/
@@ -174,7 +176,7 @@ digitalocean_synchronize() {
 	local retry
 	for retry in {1..20}; do
 		log "Attempting to connect to metadata service ..."
-		if curl -Ssf -m 1 ${meta_base} >/dev/null; then
+		if curl -LSsf -m 1 ${meta_base} >/dev/null; then
 			setup_from_metadata_service
 			break
 		else

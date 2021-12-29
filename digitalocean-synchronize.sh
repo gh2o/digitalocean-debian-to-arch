@@ -37,7 +37,7 @@ log() {
 
 http_get() {
 	# Sometimes the API request fails with 'connection reset by peer'
-	curl --location --silent --fail --retry 3 --retry-all-errors $@
+	curl --location --silent --fail --retry 3 --retry-all-errors "$@"
 }
 
 netmask_to_prefix() {

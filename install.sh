@@ -279,15 +279,15 @@ prompt_for_destruction() {
 download_and_verify() {
 	local file_url="$1"
 	local local_path="$2"
-	local expected_sha1="$3"
+	local expected_sha256="$3"
 	for try in {0..3}; do
 		if [ ${try} -eq 0 ]; then
 			[ -e "${local_path}" ] || continue
 		else
 			wget -O "${local_path}" "${file_url}"
 		fi
-		set -- $(sha1sum "${local_path}")
-		if [ $1 = "${expected_sha1}" ]; then
+		set -- $(sha256sum "${local_path}")
+		if [ $1 = "${expected_sha256}" ]; then
 			return 0
 		else
 			rm -f "${local_path}"
@@ -405,14 +405,14 @@ stage1_install() {
 	chmod 0444 /d2a/work/doroot/README
 
 	log "Downloading bootstrap tarball ..."
-	set -- $(wget -qO- ${archlinux_mirror}/iso/latest/sha1sums.txt |
+	set -- $(wget -qO- ${archlinux_mirror}/iso/latest/sha256sums.txt |
 		grep "archlinux-bootstrap-[^-]*-${target_architecture}.tar.gz")
-	local expected_sha1=$1
+	local expected_sha256=$1
 	local bootstrap_filename=$2
 	download_and_verify \
 		${archlinux_mirror}/iso/latest/${bootstrap_filename} \
 		/d2a/bootstrap.tar.gz \
-		${expected_sha1}
+		${expected_sha256}
 
 	log "Extracting bootstrap tarball ..."
 	tar -xzf /d2a/bootstrap.tar.gz \

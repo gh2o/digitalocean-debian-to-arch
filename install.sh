@@ -849,6 +849,7 @@ stage4_convert() {
 	chroot /archroot mkdir -p /boot/grub
 	chroot /archroot grub-mkconfig -o /boot/grub/grub.cfg
 	chroot /archroot grub-install /dev/vda
+	chroot /archroot ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 	umount /archroot/dev
 	umount /archroot/sys
 	umount /archroot/proc

@@ -1,0 +1,4 @@
+do_token     = "xxxxxxxxxx"
+ssh_key_id   = "~/.ssh/id_rsa.pub"
+droplet_name = "anyname"
+image_name   = "debian-10-x64"

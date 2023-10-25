@@ -1,0 +1,6 @@
+---
+- name: Download the script
+  get_url:
+    url: "https://raw.githubusercontent.com/gh2o/digitalocean-debian-to-arch/debian9/install.sh"
+    dest: "/tmp/debian-to-arch.sh"
+    mode: "0755"

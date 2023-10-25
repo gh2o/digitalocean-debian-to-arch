@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if ! command -v ansible &> /dev/null
+then
+    echo "Ansible not found! Installing..."
+    sudo apt-get update
+    sudo apt-get install -y ansible
+else
+    echo "Ansible is already installed."
+fi

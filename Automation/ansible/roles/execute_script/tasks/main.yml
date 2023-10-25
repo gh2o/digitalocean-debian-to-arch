@@ -1,0 +1,13 @@
+---
+- name: Execute the script and pass in the extra packages, then redirect output to a log
+  shell: 'nohup bash -c ''echo --extra-packages "git python3" && echo wipe this droplet | /tmp/debian-to-arch.sh'' > /tmp/script_log 2>&1 &'
+  args:
+    executable: /bin/bash
+  register: script_background
+
+- name: Pause for script execution
+  pause:
+    minutes: 3 # Adjust as needed based on how long the script takes to run
+
+- debug:
+    msg: "Arch installed! Please SSH into the droplet to verify."

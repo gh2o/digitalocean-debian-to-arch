@@ -1,0 +1,5 @@
+---
+- name: Install necessary dependencies
+  apt:
+    name: ["curl", "debootstrap", "gnupg", "arch-install-scripts"]
+    state: present

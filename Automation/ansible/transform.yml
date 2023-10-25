@@ -1,0 +1,7 @@
+---
+- hosts: digitalocean_droplets
+  become: yes
+  roles:
+    - prerequisites
+    - download_script
+    - execute_script

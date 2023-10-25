@@ -1,0 +1,8 @@
+# Terraform
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/*.tfvars
+terraform/.terraform/
+
+# Ansible
+ansible/setup.sh

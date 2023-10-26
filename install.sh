@@ -125,8 +125,7 @@ arch_packages=(
 	fakeroot # for makepkg
 	grub
 	openssh
-	python3
-	ansible
+	python3 # for python system-wide
 )
 
 gpt1_size_MiB=1

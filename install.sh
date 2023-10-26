@@ -31,7 +31,7 @@ run_from_file() {
 		[ $f -ef "$0" ] && return
 	done
 	t=$(mktemp)
-	cat > $t
+	cat >$t
 	if [ "$(head -n 1 $t)" = '#!/bin/bash' ]; then
 		chmod +x $t
 		exec /bin/bash $t "$@" </dev/fd/2
@@ -125,6 +125,8 @@ arch_packages=(
 	fakeroot # for makepkg
 	grub
 	openssh
+	python3
+	ansible
 )
 
 gpt1_size_MiB=1
@@ -152,7 +154,7 @@ fatal() {
 extract_digitalocean_synchronize() {
 	local outdir="$1"
 	mkdir -p "${outdir}"
-	awk 'x {print} $0 == "### digitalocean-synchronize ###" {x=1}' "$0" | \
+	awk 'x {print} $0 == "### digitalocean-synchronize ###" {x=1}' "$0" |
 		base64 -d | tar -zxC "${outdir}"
 }
 
@@ -163,29 +165,29 @@ parse_flags() {
 		conf_val=
 		for c in ${flag_variables[@]}; do
 			case "$1" in
-				--$c)
-					shift
-					[ $# -gt 0 ] || fatal "Option $c requires a value."
-					conf_key="$c"
-					conf_val="$1"
-					shift
-					break
-					;;
-				--$c=*)
-					conf_key="$c"
-					conf_val="${1#*=}"
-					shift
-					break
-					;;
-				--i_understand_that_this_droplet_will_be_completely_wiped)
-					continue_without_prompting=1
-					conf_key=option_acknowledged
-					shift
-					break
-					;;
-				--help)
-					print_help_and_exit
-					;;
+			--$c)
+				shift
+				[ $# -gt 0 ] || fatal "Option $c requires a value."
+				conf_key="$c"
+				conf_val="$1"
+				shift
+				break
+				;;
+			--$c=*)
+				conf_key="$c"
+				conf_val="${1#*=}"
+				shift
+				break
+				;;
+			--i_understand_that_this_droplet_will_be_completely_wiped)
+				continue_without_prompting=1
+				conf_key=option_acknowledged
+				shift
+				break
+				;;
+			--help)
+				print_help_and_exit
+				;;
 			esac
 		done
 		[ "${conf_key}" = option_acknowledged ] && continue
@@ -214,24 +216,21 @@ print_help_and_exit() {
 validate_flags_and_augment_globals() {
 	arch_packages+=(${kernel_package})
 	case "${target_disklabel}" in
-		gpt)
-			;;
-		dos)
-			;;
-		*)
-			fatal "Unknown disklabel type: ${target_disklabel}"
-			;;
+	gpt) ;;
+	dos) ;;
+	*)
+		fatal "Unknown disklabel type: ${target_disklabel}"
+		;;
 	esac
 	case "${target_filesystem}" in
-		ext4)
-			;;
-		btrfs)
-			host_packages+=(btrfs-tools)
-			arch_packages+=(btrfs-progs)
-			;;
-		*)
-			fatal "Unknown filesystem type: ${target_filesystem}"
-			;;
+	ext4) ;;
+	btrfs)
+		host_packages+=(btrfs-tools)
+		arch_packages+=(btrfs-progs)
+		;;
+	*)
+		fatal "Unknown filesystem type: ${target_filesystem}"
+		;;
 	esac
 	local disk_MiB=$(($(cat /sys/block/vda/size) >> 11))
 	archroot_size_MiB=$((disk_MiB - gpt2_size_MiB - archroot_offset_MiB))
@@ -250,19 +249,19 @@ write_flags() {
 			local -n conf_ref=${conf_key}
 			printf "%s=%q\n" "${conf_key}" "${conf_ref}"
 		done
-	} > ${filename}
+	} >${filename}
 }
 
 sanity_checks() {
 	[ ${EUID} -eq 0 ] || fatal "Script must be run as root."
 	[ ${UID} -eq 0 ] || fatal "Script must be run as root."
 	[ -e /dev/vda ] || fatal "Script must be run on a KVM machine."
-	[[ "$(cat /etc/debian_version)" =~ ^([89]|10).+$ ]] || \
+	[[ "$(cat /etc/debian_version)" =~ ^([89]|10).+$ ]] ||
 		fatal "This script only supports Debian 8.x/9.x."
 }
 
 prompt_for_destruction() {
-	(( continue_without_prompting )) && return 0
+	((continue_without_prompting)) && return 0
 	log "*** ALL DATA ON THIS DROPLET WILL BE WIPED. ***"
 	log "Please backup all important data on this droplet before continuing."
 	log 'Type "wipe this droplet" to continue or anything else to cancel.'
@@ -328,7 +327,7 @@ setup_loop_device() {
 kill_processes_in_mountpoint() {
 	if mountpoint -q $1; then
 		fuser -kms $1 || true
-		find /proc -maxdepth 2 -name root -lname $1 | \
+		find /proc -maxdepth 2 -name root -lname $1 |
 			grep -o '[0-9]*' | xargs -r kill || true
 	fi
 }
@@ -389,7 +388,7 @@ stage1_install() {
 	mkdir -p /d2a/work/doroot/etc/network
 	mkdir -p /d2a/work/doroot/etc/udev/{rules,hwdb}.d
 	touch /d2a/work/doroot/etc/network/interfaces
-	cat > /d2a/work/doroot/README <<-EOF
+	cat >/d2a/work/doroot/README <<-EOF
 		DO NOT TOUCH FILES ON THIS PARTITION.
 
 		The DOROOT partition is where DigitalOcean writes passwords and other data
@@ -431,8 +430,8 @@ stage1_install() {
 	mount --bind /d2a/packages /d2a/work/archroot/var/cache/pacman/pkg
 
 	log "Preparing bootstrap filesystem ..."
-	echo "Server = ${archlinux_mirror}/\$repo/os/\$arch" > /d2a/work/archroot/etc/pacman.d/mirrorlist
-	echo 'nameserver 8.8.8.8' > /d2a/work/archroot/etc/resolv.conf
+	echo "Server = ${archlinux_mirror}/\$repo/os/\$arch" >/d2a/work/archroot/etc/pacman.d/mirrorlist
+	echo 'nameserver 8.8.8.8' >/d2a/work/archroot/etc/resolv.conf
 
 	log "Installing base system ..."
 	chroot /d2a/work/archroot pacman-key --init
@@ -443,7 +442,7 @@ stage1_install() {
 		base ${arch_packages[@]} ${extra_packages}
 
 	log "Configuring base system ..."
-	hostname > /d2a/work/archroot/etc/hostname
+	hostname >/d2a/work/archroot/etc/hostname
 	cp /etc/ssh/ssh_host_* /d2a/work/archroot/etc/ssh/
 	local encrypted_password=$(awk -F: '$1 == "root" { print $2 }' /etc/shadow)
 	chroot /d2a/work/archroot usermod -p "${encrypted_password}" root
@@ -466,7 +465,7 @@ stage1_install() {
 		log "This is a security risk, as passwords are not as secure as public keys."
 		log "To set up public keys, visit the following URL: https://goo.gl/iEgFRs"
 		log "Remember to remove the PermitRootLogin option from sshd_config after doing so."
-		cat >> /d2a/work/archroot/etc/ssh/sshd_config <<-EOF
+		cat >>/d2a/work/archroot/etc/ssh/sshd_config <<-EOF
 
 			# This enables password logins to root over SSH.
 			# This is insecure; see https://goo.gl/iEgFRs to set up public keys.
@@ -488,11 +487,11 @@ bisect_left_on_allocation() {
 	local -n bisection_output=$3
 	local -n allocation_map=$4
 	local lo=0 hi=${#allocation_map[@]}
-	while (( lo < hi )); do
-		local mid=$(((lo+hi)/2))
+	while ((lo < hi)); do
+		local mid=$(((lo + hi) / 2))
 		set -- ${allocation_map[$mid]}
-		if (( $# == 0 )) || (( $1 < alloc_start_sector )); then
-			lo=$((mid+1))
+		if (($# == 0)) || (($1 < alloc_start_sector)); then
+			lo=$((mid + 1))
 		else
 			hi=$((mid))
 		fi
@@ -516,22 +515,22 @@ check_for_allocation_overlap() {
 	for map_name in ${allocation_maps}; do
 		local -n allocation_map=${map_name}
 		local map_length=${#allocation_map[@]}
-		(( ${map_length} )) || continue
+		((${map_length})) || continue
 		local bisection_index
 		bisect_left_on_allocation ${check_start_sector} ${check_end_sector} \
 			bisection_index ${map_name}
 		local check_index
 		for check_index in $((bisection_index - 1)) $((bisection_index)); do
-			(( check_index < 0 || check_index >= map_length )) && continue
+			((check_index < 0 || check_index >= map_length)) && continue
 			set -- ${allocation_map[${check_index}]}
-			(( $# == 0 )) && continue
+			(($# == 0)) && continue
 			local alloc_start_sector=$1
 			local alloc_end_sector=$2
-			(( check_start_sector >= alloc_end_sector || alloc_start_sector >= check_end_sector )) && continue
+			((check_start_sector >= alloc_end_sector || alloc_start_sector >= check_end_sector)) && continue
 			# overlap detected
-			cfao_overlap_start_sector=$((alloc_start_sector > check_start_sector ?
+			cfao_overlap_start_sector=$((alloc_start_sector > check_start_sector ? \
 				alloc_start_sector : check_start_sector))
-			cfao_overlap_end_sector=$((alloc_end_sector < check_end_sector ?
+			cfao_overlap_end_sector=$((alloc_end_sector < check_end_sector ? \
 				alloc_end_sector : check_end_sector))
 			return
 		done
@@ -543,7 +542,7 @@ insert_into_allocation_map() {
 	shift
 	local alloc_start_sector=$1
 	local alloc_end_sector=$2
-	if (( ${#allocation_map[@]} == 0 )); then
+	if ((${#allocation_map[@]} == 0)); then
 		allocation_map=("$*")
 	else
 		local bisection_index
@@ -560,17 +559,17 @@ stage2_arrange() {
 	local disk_sectors=$(cat /sys/block/vda/size)
 	local root_device=$(awk '$2 == "/" { root = $1 } END { print root }' /proc/mounts)
 	local root_offset_sectors=$(cat /sys/block/vda/${root_device#/dev/}/start)
-	local srcdst_map=()     # original source to target map
-	local unalloc_map=()    # extents not used by either source or target (for tmpdst_map)
-	local tmpdst_map=()     # extents on temporary redirection (allocated from unalloc_map)
+	local srcdst_map=()  # original source to target map
+	local unalloc_map=() # extents not used by either source or target (for tmpdst_map)
+	local tmpdst_map=()  # extents on temporary redirection (allocated from unalloc_map)
 	local source_start_sector source_end_sector target_start_sector target_end_sector
 
 	log "Creating block rearrangement plan ..."
 
 	# get and sort extents
-	filefrag -e -s -v -b${sector_size} /d2a/image | \
-		sed '/^ *[0-9]*:/!d;s/[:.]/ /g' | \
-		sort -nk4 > /d2a/imagemap
+	filefrag -e -s -v -b${sector_size} /d2a/image |
+		sed '/^ *[0-9]*:/!d;s/[:.]/ /g' |
+		sort -nk4 >/d2a/imagemap
 	while read line; do
 		set -- ${line}
 		source_start_sector=$(($4 + root_offset_sectors))
@@ -580,16 +579,16 @@ stage2_arrange() {
 		echo ${source_start_sector} ${source_end_sector}
 		echo ${target_start_sector} ${target_end_sector}
 		srcdst_map+=("${source_start_sector} ${source_end_sector} ${target_start_sector}")
-	done < /d2a/imagemap > /d2a/unsortedallocs
-	sort -n < /d2a/unsortedallocs > /d2a/sortedallocs
+	done </d2a/imagemap >/d2a/unsortedallocs
+	sort -n </d2a/unsortedallocs >/d2a/sortedallocs
 
 	# build map of unallocated sectors
 	local unalloc_start_sector=0 unalloc_end_sector=${disk_sectors}
 	while read source_start_sector source_end_sector; do
-		if (( source_end_sector <= unalloc_start_sector )); then
+		if ((source_end_sector <= unalloc_start_sector)); then
 			# does not overlap unallocated part
 			continue
-		elif (( source_start_sector > unalloc_start_sector )); then
+		elif ((source_start_sector > unalloc_start_sector)); then
 			# full overlap with unallocated part
 			unalloc_map+=("${unalloc_start_sector} ${source_start_sector}")
 			unalloc_start_sector=${source_end_sector}
@@ -597,8 +596,8 @@ stage2_arrange() {
 			# partial overlap
 			unalloc_start_sector=${source_end_sector}
 		fi
-	done < /d2a/sortedallocs
-	if (( unalloc_start_sector != unalloc_end_sector )); then
+	done </d2a/sortedallocs
+	if ((unalloc_start_sector != unalloc_end_sector)); then
 		unalloc_map+=("${unalloc_start_sector} ${unalloc_end_sector}")
 	fi
 
@@ -606,23 +605,23 @@ stage2_arrange() {
 	exec {blockplan_fd}>/d2a/blockplan
 
 	# arrange sectors
-	while (( ${#srcdst_map[@]} )); do
+	while ((${#srcdst_map[@]})); do
 		set -- ${srcdst_map[-1]}
 		source_start_sector=$1
 		source_end_sector=$2
 		target_start_sector=$3
 		target_end_sector=$((target_start_sector + (source_end_sector - source_start_sector)))
-		if (( source_start_sector == target_start_sector )); then
+		if ((source_start_sector == target_start_sector)); then
 			# source data is already at target destination, no need to do anything
 			unset 'srcdst_map[-1]'
 			continue
-		elif (( target_start_sector >= source_end_sector ||
-				source_start_sector >= target_end_sector )); then
+		elif ((target_start_sector >= source_end_sector || \
+			source_start_sector >= target_end_sector)); then
 			# source and target extents don't overlap. just pop this entry off the list
 			unset 'srcdst_map[-1]'
 		else
 			# source and target extents overlap.
-			if (( source_start_sector > target_start_sector )); then
+			if ((source_start_sector > target_start_sector)); then
 				# no problem: by the time source starts to get overwritten,
 				# the overwritten data will no longer be needed.
 				unset 'srcdst_map[-1]'
@@ -643,16 +642,16 @@ stage2_arrange() {
 			${target_start_sector} ${target_end_sector} \
 			overlap_start_sector overlap_end_sector \
 			srcdst_map
-		if (( overlap_end_sector )); then
+		if ((overlap_end_sector)); then
 			# insert non-overlapping parts back into srcdst_map
-			if (( target_start_sector < overlap_start_sector )); then
+			if ((target_start_sector < overlap_start_sector)); then
 				local nonoverlap_length_sectors=$((overlap_start_sector - target_start_sector))
 				insert_into_allocation_map srcdst_map \
 					${source_start_sector} \
 					$((source_start_sector + nonoverlap_length_sectors)) \
 					${target_start_sector}
 			fi
-			if (( target_end_sector > overlap_end_sector )); then
+			if ((target_end_sector > overlap_end_sector)); then
 				local nonoverlap_length_sectors=$((target_end_sector - overlap_end_sector))
 				insert_into_allocation_map srcdst_map \
 					$((source_end_sector - nonoverlap_length_sectors)) \
@@ -660,14 +659,14 @@ stage2_arrange() {
 					${overlap_end_sector}
 			fi
 			# copy overlapping portion into tmpdst_map
-			while (( overlap_start_sector < overlap_end_sector )); do
+			while ((overlap_start_sector < overlap_end_sector)); do
 				set -- ${unalloc_map[-1]}
-				unset 'unalloc_map[-1]'  # or nullglob will eat it up
+				unset 'unalloc_map[-1]' # or nullglob will eat it up
 				local unalloc_start_sector=$1
 				local unalloc_end_sector=$2
 				local unalloc_length_sectors=$((unalloc_end_sector - unalloc_start_sector))
 				local overlap_length_sectors=$((overlap_end_sector - overlap_start_sector))
-				if (( overlap_length_sectors < unalloc_length_sectors )); then
+				if ((overlap_length_sectors < unalloc_length_sectors)); then
 					# return unused portion to unalloc_map
 					unalloc_map+=("${unalloc_start_sector} $((unalloc_end_sector - overlap_length_sectors))")
 					unalloc_start_sector=$((unalloc_end_sector - overlap_length_sectors))
@@ -681,7 +680,7 @@ stage2_arrange() {
 					${unalloc_start_sector} \
 					${unalloc_end_sector} \
 					${overlap_start_sector}
-				(( overlap_start_sector += unalloc_length_sectors ))
+				((overlap_start_sector += unalloc_length_sectors))
 			done
 		else
 			echo >&${blockplan_fd} \
@@ -692,7 +691,7 @@ stage2_arrange() {
 	done
 
 	# restore overlapped sectors
-	while (( ${#tmpdst_map[@]} )); do
+	while ((${#tmpdst_map[@]})); do
 		set -- ${tmpdst_map[-1]}
 		unset 'tmpdst_map[-1]'
 		source_start_sector=$1
@@ -716,12 +715,12 @@ cleanup_mid_directory() {
 add_binary_to_mid() {
 	mkdir -p $(dirname /d2a/mid/$1)
 	cp $1 /d2a/mid/$1
-	ldd $1 | grep -o '/[^ ]* (0x[0-9a-f]*)' | \
-			while read libpath ignored; do
-		[ -e /d2a/mid/${libpath} ] && continue
-		mkdir -p $(dirname /d2a/mid/${libpath})
-		cp ${libpath} /d2a/mid/${libpath}
-	done
+	ldd $1 | grep -o '/[^ ]* (0x[0-9a-f]*)' |
+		while read libpath ignored; do
+			[ -e /d2a/mid/${libpath} ] && continue
+			mkdir -p $(dirname /d2a/mid/${libpath})
+			cp ${libpath} /d2a/mid/${libpath}
+		done
 }
 
 stage3_prepare_exit() {
@@ -757,7 +756,7 @@ stage3_prepare() {
 	write_flags /d2a/mid/flags
 
 	# copy myself
-	cat "$0" > /d2a/mid/init
+	cat "$0" >/d2a/mid/init
 	chmod 0755 /d2a/mid/init
 
 	# detach all loop devices
@@ -787,7 +786,7 @@ stage4_convert() {
 
 	# ensure that all other processes are dead
 	sysctl -w kernel.sysrq=1 >/dev/null
-	echo i > /proc/sysrq-trigger
+	echo i >/proc/sysrq-trigger
 
 	# unmount old root
 	local retry
@@ -800,7 +799,7 @@ stage4_convert() {
 				sleep 1
 			fi
 		done
-		if (( retry )); then
+		if ((retry)); then
 			umount -rl /mnt
 		fi
 	fi
@@ -815,13 +814,13 @@ stage4_convert() {
 	local source_sector target_sector extent_length
 	while read source_sector target_sector extent_length; do
 		# increment processed length before extent length gets optimized
-		(( processed_length += extent_length )) || true
+		((processed_length += extent_length)) || true
 		# optimize extent length
 		local transfer_size=${sector_size}
-		until (( (source_sector & 1) || (target_sector & 1) ||
-				(extent_length & 1) || (transfer_size >= 0x100000) )); do
-			(( source_sector >>= 1 , target_sector >>= 1 , extent_length >>= 1,
-				transfer_size *= 2 )) || true
+		until (((source_sector & 1) || (target_sector & 1) || (\
+			extent_length & 1) || (transfer_size >= 0x100000))); do
+			((source_sector >>= 1, target_sector >>= 1, extent_length >>= 1, \
+			transfer_size *= 2)) || true
 		done
 		# do the actual transfer
 		dd if=/dev/vda of=/dev/vda bs=${transfer_size} \
@@ -829,11 +828,11 @@ stage4_convert() {
 			count=${extent_length} 2>/dev/null
 		# print out the percentage
 		next_percentage=$((100 * processed_length / total_length))
-		if (( next_percentage != prev_percentage )); then
+		if ((next_percentage != prev_percentage)); then
 			printf "\rTransferring blocks ... %s%%" ${next_percentage}
 			prev_percentage=${next_percentage}
 		fi
-	done < /blockplan
+	done </blockplan
 	echo
 
 	# reread partition table
@@ -863,7 +862,7 @@ stage4_convert() {
 reinstall_digitalocean_synchronize() {
 	local build_dir=$(mktemp -d)
 	extract_digitalocean_synchronize ${build_dir}
-	( cd ${build_dir} && env EUID=1 makepkg --install --noconfirm )
+	(cd ${build_dir} && env EUID=1 makepkg --install --noconfirm)
 }
 
 if [ -e /var/lib/pacman ]; then

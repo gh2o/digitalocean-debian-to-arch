@@ -1,0 +1,18 @@
+---
+- name: Get /etc/os-release contents
+  command: cat /etc/os-release
+  register: os_release
+  changed_when: False
+
+- name: Extract the OS ID
+  set_fact:
+    os_id: "{{ os_release.stdout | regex_search('ID=(\\w+)', '\\1') | first }}"
+
+- name: Fail if the system is not Arch Linux
+  fail:
+    msg: "The system has not been converted to Arch Linux"
+  when: os_id != 'arch'
+
+- debug:
+    msg: "The system has been successfully converted to Arch Linux!"
+  when: os_id == 'arch'
